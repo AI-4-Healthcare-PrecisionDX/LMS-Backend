@@ -1,14 +1,38 @@
-from sqlalchemy import Boolean, Column, Integer, String
+from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
+import uuid
+import datetime
 
 from app.db.base_class import Base
 
+
+# user_id, first_name, last_name, email, password, gender, phone_number, role, is_active, updated_at, created_at
 class User(Base):
-    id = Column(Integer, primary_key=True, index=True)
-    full_name = Column(String)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    contact_number = Column(String)
-    is_active = Column(Boolean(), default=True)
+    user_id = Column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+        unique=True,
+        index=True,
+    )
+    first_name = Column(String, nullable=False)
+    last_name = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True, index=True)
+    password = Column(String, nullable=False)
+    username = Column(String, nullable=False)
+    gender = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
     role = Column(String, nullable=False)
+    is_active = Column(Boolean(), default=True)
     is_superuser = Column(Boolean(), default=False)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    branch_id = Column(UUID(as_uuid=True), ForeignKey("branch.branch_id"))
+    branch = relationship("Branch", back_populates="users")
+
+    settings = relationship("UserSettings", back_populates="user")
+    admin = relationship("Admin", back_populates="user")
+    teacher = relationship("Teacher", back_populates="user")
+    student = relationship("Student", back_populates="user")

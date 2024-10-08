@@ -30,9 +30,11 @@ class Settings(BaseSettings):
     POSTGRES_DB: str
     SQLALCHEMY_DATABASE_URI: str
 
-    # FIRST_SUPERUSER: EmailStr
-    # FIRST_SUPERUSER_PASSWORD: str
-    # USERS_OPEN_REGISTRATION: bool = False
+    FIRST_SUPERUSER: str
+    FIRST_SUPERUSER_EMAIL: EmailStr
+    FIRST_SUPERUSER_PASSWORD: str
+    FIRST_SUPERUSER_FirstName: str
+    FIRST_SUPERUSER_LastName: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

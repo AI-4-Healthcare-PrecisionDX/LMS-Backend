@@ -10,7 +10,6 @@ from app import crud, models, schemas
 from app.core import security
 from app.db.session import SessionLocal
 from app.core.config import settings
-from app.db.init_db import init_db
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_V1_STR}/login/access-token"
@@ -38,7 +37,7 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Could not validate credentials",
         )
-    user = crud.user.get(db, id=token_data.sub)
+    user = crud.user.get_by_id(db, id=token_data.sub)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

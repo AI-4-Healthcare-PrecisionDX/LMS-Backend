@@ -11,9 +11,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
 
-def create_access_token(
-    subject: str | Any, expires_delta: timedelta = None
-) -> str:
+def create_access_token(subject: str | Any, expires_delta: timedelta = None) -> str:
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
@@ -31,3 +29,15 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
+
+# def generate_token_email(email: str) -> str:
+#     expire = datetime.utcnow() + timedelta(minutes=settings.EMAIL_TOKEN_EXPIRE_MINUTES)
+#     to_encode = {"exp": expire, "sub": email}
+#     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+#     return encoded_jwt
+
+
+# def verify_token_email(token: str) -> str:
+#     payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+#     return payload.get("sub")
