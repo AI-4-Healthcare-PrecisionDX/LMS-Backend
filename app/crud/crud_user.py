@@ -12,7 +12,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
         return db.query(User).filter(User.email == email).first()
 
-    def get_by_id(self, db: Session, *, id: int) -> Optional[User]:
+    def get_by_id(self, db: Session, *, id: str) -> Optional[User]:
         return db.query(User).filter(User.user_id == id).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
