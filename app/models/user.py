@@ -36,3 +36,12 @@ class User(Base):
     admin = relationship("Admin", back_populates="user")
     teacher = relationship("Teacher", back_populates="user")
     student = relationship("Student", back_populates="user")
+
+    global_library_items = relationship("GlobalLibrary", back_populates="user")
+    
+    course_materials = relationship("CourseMaterials", back_populates="user")
+    
+    discussion_messages = relationship("DiscussionMessage", back_populates="user")
+    
+    discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="user")
+    

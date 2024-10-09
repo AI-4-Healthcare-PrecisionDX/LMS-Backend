@@ -15,8 +15,11 @@ class Teacher(Base):
         unique=True,
         index=True,
     )
+    
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
     user = relationship("User", back_populates="teacher")
+    
+    sections = relationship("Section", back_populates="teacher")

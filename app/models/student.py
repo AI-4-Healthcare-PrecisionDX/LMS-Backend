@@ -16,8 +16,16 @@ class Student(Base):
         unique=True,
         index=True,
     )
+    metric_id = Column(String, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
     user = relationship("User", back_populates="student")
+    
+    
+    student_stats = relationship("StudentStats", back_populates="student")
+    
+    inboxes = relationship("Inbox", back_populates="student")
+    
+    assignment_submissions = relationship("AssignmentSubmission", back_populates="student")
