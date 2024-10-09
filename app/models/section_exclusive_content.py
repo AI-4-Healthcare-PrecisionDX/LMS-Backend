@@ -8,18 +8,21 @@ import datetime
 from app.db.base_class import Base
 
 
-class Admin(Base):
-    admin_id = Column(
+class SectionExclusiveContent(Base):
+    __tablename__ = "section_exclusive_content"
+    
+    section_exclusive_content_id = Column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
         unique=True,
         index=True,
     )
+    
+    content_type = Column(String, nullable=True)
+    content_file = Column(String, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-
-    user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
-    user = relationship("User", back_populates="admin")
-
-    template_courses = relationship("TemplateCourse", back_populates="admin")
+    
+    section_id = Column(UUID(as_uuid=True), ForeignKey("section.section_id"))
+    section = relationship("Section", back_populates="section_exclusive_contents")
