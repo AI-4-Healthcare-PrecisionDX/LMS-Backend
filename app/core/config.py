@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str
     FIRST_SUPERUSER_FirstName: str
     FIRST_SUPERUSER_LastName: str
+    
+    PGADMIN_DEFAULT_EMAIL : EmailStr
+    PGADMIN_DEFAULT_PASSWORD : str
 
     model_config = SettingsConfigDict(env_file=".env")
 
