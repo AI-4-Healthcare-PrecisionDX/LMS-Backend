@@ -40,3 +40,24 @@ def read_user_by_id(
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return user
+
+
+
+@router.post("/create_user", response_model=schemas.User)
+def create_user(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_in: schemas.UserCreateBySuperAdmin,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Create new user.
+    """
+    user = crud.user.get_by_email(db, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this username already exists in the system.",
+        )
+    user = crud.user.create(db, obj_in=user_in)
+    return user
