@@ -1,2 +1,2 @@
-from .user import User, UserCreate, UserInDB, UserUpdate
+from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperAdmin
 from .token import Token, TokenPayload
