@@ -11,53 +11,319 @@ from app.api import deps
 router = APIRouter()
 
 
-# Get the list of users
-@router.get("/", response_model=List[schemas.User])
-def read_users(
+# Create a user as admin user
+@router.post("/create-admin", response_model=schemas.User)
+def create_admin_user(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_in: schemas.UserCreate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Create new user.
+    """
+    # Check if the user already exists
+    try:
+        user = crud.user.get_by_email(db, email=user_in.email)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the user",
+        )
+
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
+
+    try:
+        user = crud.user.create_by_superuser(db, obj_in=user_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the user",
+        )
+
+    # Create a Admin
+    try:
+        admin = crud.user.create_admin(db, user_id=user.user_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the admin",
+        )
+    return user
+
+
+# Create a new institution
+@router.post("/create_institution", response_model=schemas.Institution)
+def create_institution(
+    *,
+    db: Session = Depends(deps.get_db),
+    institution_in: schemas.InstitutionCreate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Create new institution.
+    """
+    try:
+        institution = crud.institution.create_institution(db, obj_in=institution_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the institution",
+        )
+    return institution
+
+
+# Get the list of institutions
+@router.get("/institutions", response_model=List[schemas.Institution])
+def read_institutions(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
-    Retrieve users.
+    Retrieve institutions.
     """
-    users = crud.user.get_multi(db, skip=skip, limit=limit)
-    return users
+    print("Current user: ", current_user)
+    try:
+        institutions = crud.institution.get_multi(db, skip=skip, limit=limit)
+    except Exception as e:
+        print("Error: ", e)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the institutions",
+        )
+    return institutions
 
 
-# Get a user by ID
-@router.get("/{user_id}", response_model=schemas.User)
-def read_user_by_id(
-    user_id: str,
+# Get an institution by ID
+@router.get("/institutions/{institution_id}", response_model=schemas.Institution)
+def read_institution_by_id(
+    institution_id: str,
     db: Session = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
-    Get a specific user by ID.
+    Get a specific institution by ID.
     """
-    user = crud.user.get_by_id(db, id=user_id)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    try:
+        institution = crud.institution.get_institution_by_id(db, id=institution_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the institution",
+        )
+    if institution is None:
+        raise HTTPException(status_code=404, detail="Institution not found")
+    return institution
 
 
-
-@router.post("/create_user", response_model=schemas.User)
-def create_user(
+# Update an institution
+@router.put("/institutions/{institution_id}", response_model=schemas.Institution)
+def update_institution(
     *,
     db: Session = Depends(deps.get_db),
-    user_in: schemas.UserCreateBySuperAdmin,
+    institution_id: str,
+    institution_in: schemas.InstitutionUpdate,
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
-    Create new user.
+    Update an institution.
     """
-    user = crud.user.get_by_email(db, email=user_in.email)
-    if user:
+    try:
+        institution = crud.institution.get_institution_by_id(db, id=institution_id)
+    except Exception as e:
         raise HTTPException(
-            status_code=400,
-            detail="The user with this username already exists in the system.",
+            status_code=500,
+            detail="An error occurred while retrieving the institution",
         )
-    user = crud.user.create(db, obj_in=user_in)
-    return user
+    if institution is None:
+        raise HTTPException(status_code=404, detail="Institution not found")
+    institution = crud.institution.update_institution(
+        db, db_obj=institution, obj_in=institution_in
+    )
+    return institution
+
+
+# Create a new branch
+@router.post("/create_branch", response_model=schemas.Branch)
+def create_branch(
+    *,
+    db: Session = Depends(deps.get_db),
+    branch_in: schemas.BranchCreate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Create new branch.
+    """
+    try:
+        branch = crud.branch.create_branch(db, obj_in=branch_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the branch",
+        )
+    return branch
+
+
+# Get the list of branches
+@router.get("/branches", response_model=List[schemas.Branch])
+def read_branches(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Retrieve branches.
+    """
+    try:
+        branches = crud.branch.get_all_branches(db, skip=skip, limit=limit)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the branches",
+        )
+    return branches
+
+
+# Get a branch by ID
+@router.get("/branches/{branch_id}", response_model=schemas.Branch)
+def read_branch_by_id(
+    branch_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Get a specific branch by ID.
+    """
+    try:
+        branch = crud.branch.get_branch_by_id(db, id=branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the branch",
+        )
+    if branch is None:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    return branch
+
+
+# Update a branch
+@router.put("/branches/{branch_id}", response_model=schemas.Branch)
+def update_branch(
+    *,
+    db: Session = Depends(deps.get_db),
+    branch_id: str,
+    branch_in: schemas.BranchUpdate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Update a branch.
+    """
+    try:
+        branch = crud.branch.get_branch_by_id(db, id=branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the branch",
+        )
+    if branch is None:
+        raise HTTPException(status_code=404, detail="Branch not found")
+    branch = crud.branch.update_branch(db, db_obj=branch, obj_in=branch_in)
+    return branch
+
+
+# Create a new department
+@router.post("/create_department", response_model=schemas.Department)
+def create_department(
+    *,
+    db: Session = Depends(deps.get_db),
+    department_in: schemas.DepartmentCreate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Create new department.
+    """
+    try:
+        department = crud.department.create_department(db, obj_in=department_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the department",
+        )
+    return department
+
+
+# Get the list of departments
+@router.get("/departments", response_model=List[schemas.Department])
+def read_departments(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Retrieve departments.
+    """
+    try:
+        departments = crud.department.get_all_departments(db, skip=skip, limit=limit)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the departments",
+        )
+    return departments
+
+
+# Get a department by ID
+@router.get("/departments/{department_id}", response_model=schemas.Department)
+def read_department_by_id(
+    department_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Get a specific department by ID.
+    """
+    try:
+        department = crud.department.get_department_by_id(db, id=department_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the department",
+        )
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return department
+
+
+# Update a department
+@router.put("/departments/{department_id}", response_model=schemas.Department)
+def update_department(
+    *,
+    db: Session = Depends(deps.get_db),
+    department_id: str,
+    department_in: schemas.DepartmentUpdate,
+    current_user: models.User = Depends(deps.get_current_active_superuser),
+) -> Any:
+    """
+    Update a department.
+    """
+    try:
+        department = crud.department.get_department_by_id(db, id=department_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the department",
+        )
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    department = crud.department.update_department(
+        db, db_obj=department, obj_in=department_in
+    )
+    return department

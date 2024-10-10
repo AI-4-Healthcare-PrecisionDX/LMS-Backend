@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from app.core.security import get_password_hash, verify_password
 from app.crud.base import CRUDBase
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
+from app.models.user_settings import UserSettings
+from app.schemas.user import UserCreate, UserUpdate, UserCreateBySuperUser
+from app.models.admin import Admin
 import uuid
 
 
@@ -24,10 +26,45 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             first_name=obj_in.first_name,
             last_name=obj_in.last_name,
             username=unique_username,
-            role="user",
             gender=obj_in.gender,
-            phone_number = obj_in.phone_number
+            phone_number=obj_in.phone_number,
         )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+
+        user_settings = UserSettings(user_id=db_obj.user_id)
+        db.add(user_settings)
+        db.commit()
+        db.refresh(user_settings)
+
+        return db_obj
+
+    def create_by_superuser(
+        self, db: Session, *, obj_in: UserCreateBySuperUser
+    ) -> User:
+        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+        db_obj = User(
+            email=obj_in.email,
+            password=get_password_hash(obj_in.password),
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
+            username=unique_username,
+            role="admin",
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+
+        user_settings = UserSettings(user_id=db_obj.user_id)
+        db.add(user_settings)
+        db.commit()
+        db.refresh(user_settings)
+
+        return db_obj
+
+    def create_admin(self, db: Session, *, user_id: str):
+        db_obj = Admin(user_id=user_id)
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)

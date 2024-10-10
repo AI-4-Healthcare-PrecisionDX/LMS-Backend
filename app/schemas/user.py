@@ -15,13 +15,13 @@ class UserBase(BaseModel):
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
+    email: EmailStr
     password: str
-    
-class UserCreateBySuperAdmin(UserBase):
-    email : str
-    password: str
-    role : str
 
+
+class UserCreateBySuperUser(UserBase):
+    email: EmailStr
+    password: str
 
 
 # Properties to receive via API on update
@@ -32,7 +32,7 @@ class UserUpdate(UserBase):
 class UserInDBBase(UserBase):
     user_id: Optional[UUID] = None
     username: Optional[str] = None
-    role : Optional[str] = None
+    role: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: Optional[bool] = False
     updated_at: Optional[datetime] = None
