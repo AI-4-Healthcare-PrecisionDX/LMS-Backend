@@ -1,16 +1,17 @@
 services:
   web:
     build: .
+    image: lms-backend:latest
     depends_on:
       - db
     volumes:
       - ./:/code:ro
     environment:
-      - DATABASE_URL=${SQLALCHEMY_DATABASE_URI}
+      - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
     ports:
       - "8000:8000"
     command: >
-      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      bash app/scripts/prestart.sh
 
   db:
     image: postgres:16-alpine
