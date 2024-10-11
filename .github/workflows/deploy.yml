@@ -20,6 +20,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
+      # Debugging Step: Test SSH connection with verbose output
+      - name: Test SSH connection
+        run: ssh -vvv -o StrictHostKeyChecking=no root@203.161.38.194 echo "Connection successful"
+
       # Step 3: Copy the application code to the correct directory on the server using rsync
       - name: Copy files to the server
         run: |
