@@ -182,7 +182,7 @@ def read_branches(
     Retrieve branches.
     """
     try:
-        branches = crud.branch.get_all_branches(db, skip=skip, limit=limit)
+        branches = crud.branch.get_multi(db, skip=skip, limit=limit)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -271,7 +271,7 @@ def read_departments(
     Retrieve departments.
     """
     try:
-        departments = crud.department.get_all_departments(db, skip=skip, limit=limit)
+        departments = crud.department.get_multi(db, skip=skip, limit=limit)
     except Exception as e:
         raise HTTPException(
             status_code=500,
