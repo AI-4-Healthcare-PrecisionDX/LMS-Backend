@@ -42,9 +42,9 @@ services:
     depends_on:
       - web
     volumes:
-      - /home/etc/nginx/sites-available/lms-backend:/etc/nginx/conf.d/default.conf
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
-      - "8081:80"
+      - "80:80"
     restart: always
 
 volumes:
