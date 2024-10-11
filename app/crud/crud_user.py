@@ -40,6 +40,28 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
 
         return db_obj
 
+    def create_superuser(
+        self, db: Session, *, obj_in: UserCreate, username: str
+    ) -> User:
+        db_obj = User(
+            email=obj_in.email,
+            password=get_password_hash(obj_in.password),
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
+            username=username,
+            role="superuser",
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+
+        user_settings = UserSettings(user_id=db_obj.user_id)
+        db.add(user_settings)
+        db.commit()
+        db.refresh(user_settings)
+
+        return db_obj
+
     def create_by_superuser(
         self, db: Session, *, obj_in: UserCreateBySuperUser
     ) -> User:
