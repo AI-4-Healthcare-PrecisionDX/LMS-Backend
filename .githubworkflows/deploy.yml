@@ -1,0 +1,36 @@
+name: CI/CD Pipeline for FastAPI Deployment
+
+on:
+  push:
+    branches:
+      - main  # Trigger the deployment when code is pushed to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the code from GitHub
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      # Step 2: Set up the SSH agent to authenticate with the server
+      - name: Set up SSH agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      # Step 3: Copy the application code to the server using rsync
+      - name: Copy files to the server
+        run: |
+          ssh -o StrictHostKeyChecking=no root@203.161.38.194 'mkdir -p /home/root/fastapi-app'
+          rsync -avz --exclude '.git' --exclude 'node_modules' ./ root@203.161.38.194:/home/root/fastapi-app/
+
+      # Step 4: SSH into the server and deploy the updated application
+      - name: Deploy the application
+        run: |
+          ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
+            cd /home/root/fastapi-app
+            sudo docker-compose down
+            sudo docker-compose up --build -d
+          EOF
