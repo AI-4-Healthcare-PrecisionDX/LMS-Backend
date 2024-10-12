@@ -37,4 +37,5 @@ jobs:
             cd /home/fastapi/docker-master-ratim-lms-backend
             sudo docker-compose down
             sudo docker-compose up --build -d
+            echo "Deployment successful! Your application is live at http://203.161.38.194:8082"
           EOF
