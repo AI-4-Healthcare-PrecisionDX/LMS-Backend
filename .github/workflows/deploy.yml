@@ -48,4 +48,5 @@ jobs:
 
             # Optionally check for specific log errors (e.g., in web container)
             sudo docker-compose logs web | grep -i 'error' && exit 1
+            sudo docker-compose logs pgadmin | grep -i 'error' && exit 1
           EOF
