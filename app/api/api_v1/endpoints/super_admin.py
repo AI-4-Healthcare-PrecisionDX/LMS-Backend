@@ -16,7 +16,7 @@ router = APIRouter()
 def create_admin_user(
     *,
     db: Session = Depends(deps.get_db),
-    user_in: schemas.UserCreate,
+    user_in: schemas.UserCreateBySuperUser,
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
