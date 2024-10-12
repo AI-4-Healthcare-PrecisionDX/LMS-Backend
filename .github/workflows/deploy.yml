@@ -43,4 +43,5 @@ jobs:
               echo "Critical error found in web_1 logs:"
               echo "$ERROR_LOG"
               exit 1  # Fail the deployment if any error is found
+            fi
           EOF
