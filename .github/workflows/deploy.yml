@@ -20,21 +20,33 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      # Debugging Step: Test SSH connection with verbose output
-      - name: Test SSH connection
-        run: ssh -vvv -o StrictHostKeyChecking=no root@203.161.38.194 echo "Connection successful"
-
       # Step 3: Copy the application code to the correct directory on the server using rsync
       - name: Copy files to the server
         run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 'mkdir -p /home/fastapi/docker-master-ratim-lms-backend'
           rsync -avz --exclude '.git' --exclude 'node_modules' ./ root@203.161.38.194:/home/fastapi/docker-master-ratim-lms-backend/
 
-      # Step 4: SSH into the server and deploy the updated application
+      # Step 4: SSH into the server and deploy the updated application, exit on any error
       - name: Deploy the application
         run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
+            set -e  # Exit on error
             cd /home/fastapi/docker-master-ratim-lms-backend
-            sudo docker-compose down
-            sudo docker-compose up --build -d
+
+            # Stop and remove old containers, exit if this step fails
+            sudo docker-compose down || exit 1
+
+            # Rebuild and start the containers, exit if this step fails
+            sudo docker-compose up --build -d || exit 1
+
+            # Check if the web service is running correctly
+            sudo docker-compose ps || exit 1
+
+            # General error log check (you can customize or expand these patterns)
+            ERROR_LOG=$(sudo docker-compose logs web | grep -E -i 'error|exception|traceback|undefinedtable|fail|fatal')
+            if [[ -n "$ERROR_LOG" ]]; then
+              echo "Critical error found in web_1 logs:"
+              echo "$ERROR_LOG"
+              exit 1  # Fail the deployment if any error is found
+            fi
           EOF
