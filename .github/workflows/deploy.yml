@@ -37,6 +37,10 @@ jobs:
             cd /home/fastapi/lms-backend
             sudo docker-compose down
             sudo docker-compose up --build -d
-            sudo docker-compose logs web | grep -i 'error' && exit 1
-            sudo docker-compose logs pgadmin | grep -i 'error' && exit 1
+            # General error log check (you can customize or expand these patterns)
+            ERROR_LOG=$(sudo docker-compose logs web | grep -E -i 'error|exception|traceback|undefinedtable|fail|fatal')
+            if [[ -n "$ERROR_LOG" ]]; then
+              echo "Critical error found in web_1 logs:"
+              echo "$ERROR_LOG"
+              exit 1  # Fail the deployment if any error is found
           EOF
