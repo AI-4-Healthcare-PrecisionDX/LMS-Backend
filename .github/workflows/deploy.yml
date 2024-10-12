@@ -34,8 +34,18 @@ jobs:
       - name: Deploy the application
         run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
+            set -e  # Exit on error
             cd /home/fastapi/docker-master-ratim-lms-backend
-            sudo docker-compose down
-            sudo docker-compose up --build -d
-            sudo docker-compose logs -f
+
+            # Stop and remove old containers, exit if this step fails
+            sudo docker-compose down || exit 1
+
+            # Rebuild and start the containers, exit if this step fails
+            sudo docker-compose up --build -d || exit 1
+
+            # Check if the web service is running correctly
+            sudo docker-compose ps || exit 1
+
+            # Optionally check for specific log errors (e.g., in web container)
+            sudo docker-compose logs web | grep -i 'error' && exit 1
           EOF
