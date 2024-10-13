@@ -3,11 +3,11 @@
 set -e  # Exit the script on any error
 set -x  # Print commands before running them
 
-# Wait for the DB to be ready before running migrations
+echo "Waiting for the database to be ready..."
 python app/backend_pre_start.py
 
-# Apply Alembic migrations
+echo "Applying Alembic migrations..."
 alembic upgrade head
 
-# Run the main process
+echo "Starting the FastAPI application..."
 exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
