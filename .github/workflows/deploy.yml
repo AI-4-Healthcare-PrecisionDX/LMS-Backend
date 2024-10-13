@@ -1,9 +1,9 @@
-name: CI/CD Pipeline for FastAPI Deployment
+name: "application is live at http://203.161.38.194:8082"
 
 on:
   push:
     branches:
-      - main # Trigger the deployment when code is pushed to the 'main' branch
+      - docker-master-ratim # Trigger the deployment when code is pushed to the 'docker-master-ratim' branch
 
 jobs:
   deploy:
@@ -27,8 +27,8 @@ jobs:
       # Step 3: Copy the application code to the correct directory on the server using rsync
       - name: Copy files to the server
         run: |
-          ssh -o StrictHostKeyChecking=no root@203.161.38.194 'mkdir -p /home/fastapi/lms-backend'
-          rsync -avz --exclude '.git' --exclude 'node_modules' ./ root@203.161.38.194:/home/fastapi/lms-backend/
+          ssh -o StrictHostKeyChecking=no root@203.161.38.194 'mkdir -p /home/fastapi/docker-master-ratim-lms-backend'
+          rsync -avz --exclude '.git' --exclude 'node_modules' ./ root@203.161.38.194:/home/fastapi/docker-master-ratim-lms-backend/
 
       # Step 4: SSH into the server and deploy the updated application
       - name: Deploy the application
