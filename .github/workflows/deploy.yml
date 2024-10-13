@@ -79,4 +79,4 @@ jobs:
             else
               echo "Deployment successful!"
             fi
-          EOF'
+          EOF
