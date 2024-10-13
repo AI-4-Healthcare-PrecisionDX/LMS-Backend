@@ -10,6 +10,8 @@ services:
       - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
     ports:
       - "8001:8000" # No conflict with main branch
+    command: >
+      bash app/scripts/prestart.sh
 
   db:
     image: postgres:16-alpine
