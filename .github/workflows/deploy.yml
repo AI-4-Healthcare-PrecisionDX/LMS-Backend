@@ -32,7 +32,7 @@ jobs:
 
       # Step 4: SSH into the server and deploy the updated application
       - name: Deploy the application
-      - run: |
+        run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
           set -e
           cd /home/fastapi/docker-master-ratim-lms-backend
