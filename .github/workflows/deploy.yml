@@ -34,16 +34,49 @@ jobs:
       - name: Deploy the application
         run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
-          set -e
-          cd /home/fastapi/docker-master-ratim-lms-backend
-          sudo docker-compose down || exit 1
-          sudo docker-compose up --build -d || exit 1
-          sudo docker-compose ps || exit 1
+            set -e
+            cd /home/fastapi/docker-master-ratim-lms-backend
 
-          # Add these lines for more detailed error reporting
-          echo "Checking container logs for errors..."
-          for service in web db pgadmin nginx-test; do
-            echo "Logs for $service:"
-            sudo docker-compose logs $service | tail -n 50
-          done
-          EOF
+            echo "Deploying application..."
+            docker-compose down
+            docker-compose up -d --build
+
+            echo "Waiting for services to initialize..."
+            sleep 30
+
+            check_service() {
+              local service=$1
+              echo "Checking $service..."
+              
+              if docker-compose ps $service | grep -q "Up"; then
+                echo "$service is running."
+              else
+                echo "ERROR: $service is not running!"
+                docker-compose logs $service | tail -n 50
+                return 1
+              fi
+              
+              if docker-compose logs $service | grep -iq "error"; then
+                echo "WARNING: Found errors in $service logs:"
+                docker-compose logs $service | grep -i "error" | tail -n 10
+              fi
+              
+              return 0
+            }
+
+            services=("web" "db" "pgadmin" "nginx-test")
+            failed=false
+
+            for service in "${services[@]}"; do
+              if ! check_service $service; then
+                failed=true
+              fi
+            done
+
+            if $failed; then
+              echo "Deployment failed. Check the logs above for details."
+              exit 1
+            else
+              echo "Deployment successful!"
+            fi
+          EOF'
