@@ -11,3 +11,9 @@ from .super_admin import (
     InstitutionCreate,
     InstitutionUpdate,
 )
+
+from .course import (
+    TemplateCourse,
+    TemplateCourseCreate,
+    TemplateCourseUpdate,
+)
