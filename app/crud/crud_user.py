@@ -6,8 +6,10 @@ from app.core.security import get_password_hash, verify_password
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.models.user_settings import UserSettings
-from app.schemas.user import UserCreate, UserUpdate, UserCreateBySuperUser
+from app.schemas.user import UserCreate, UserUpdate, UserCreateBySuperUser,UserCreateTeacher,UserCreateStudent, UserInDBStudent, UserInDBTeacher
 from app.models.admin import Admin
+from app.models.teacher import Teacher
+from app.models.student import Student
 import uuid
 
 
@@ -39,10 +41,71 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(user_settings)
 
         return db_obj
+    
+    
+    def create_teacher(self, db: Session, *, obj_in: UserCreateTeacher) -> UserInDBTeacher:
+        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+        db_obj = User(
+            email=obj_in.email,
+            password=get_password_hash(obj_in.password),
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
+            username=unique_username,
+            phone_number=obj_in.phone_number,
+            gender=obj_in.gender,
+            role="teacher",
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        
+        teacher = Teacher(user_id=db_obj.user_id)
+        db.add(teacher)
+        db.commit()
+        db.refresh(teacher)
+        
+        user_settings = UserSettings(user_id=db_obj.user_id)
+        db.add(user_settings)
+        db.commit()
+        db.refresh(user_settings)
+        
+        return db_obj
+
+    def create_student(self, db: Session, *, obj_in: UserCreateStudent) -> UserInDBStudent:
+        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+        db_obj = User(
+            email=obj_in.email,
+            password=get_password_hash(obj_in.password),
+            first_name=obj_in.first_name,
+            last_name=obj_in.last_name,
+            username=unique_username,
+            phone_number=obj_in.phone_number,
+            gender=obj_in.gender,
+            role="student",
+        )
+        db.add(db_obj)
+        db.commit()
+        db.refresh(db_obj)
+        
+        student = Student(user_id=db_obj.user_id, metric_id=obj_in.metric_id)
+        db.add(student)
+        db.commit()
+        db.refresh(student)
+        
+        user_settings = UserSettings(user_id=db_obj.user_id)
+        db.add(user_settings)
+        db.commit()
+        db.refresh(user_settings)
+        
+        db_obj.metric_id = obj_in.metric_id
+        
+        return db_obj
+        
 
     def create_superuser(
-        self, db: Session, *, obj_in: UserCreate, username: str
+        self, db: Session, *, obj_in: UserCreateBySuperUser, username: str
     ) -> User:
+        
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),

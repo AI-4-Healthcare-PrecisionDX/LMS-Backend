@@ -17,7 +17,13 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     email: EmailStr
     password: str
-
+    
+    
+class UserCreateStudent(UserCreate):
+    metric_id : str
+    
+class UserCreateTeacher(UserCreate):
+    pass
 
 class UserCreateBySuperUser(UserBase):
     email: EmailStr
@@ -39,6 +45,12 @@ class UserInDBBase(UserBase):
 
     class Config:
         from_attributes = True
+        
+class UserInDBStudent(UserInDBBase):
+    metric_id: str
+    
+class UserInDBTeacher(UserInDBBase):
+    pass
 
 
 # Additional properties to return via API
