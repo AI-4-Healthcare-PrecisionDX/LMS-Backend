@@ -9,9 +9,7 @@ services:
     environment:
       - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
     ports:
-      - "8000:8000"
-    command: >
-      bash app/scripts/prestart.sh
+      - "8001:8000" # No conflict with main branch
 
   db:
     image: postgres:16-alpine
@@ -30,20 +28,20 @@ services:
       - PGADMIN_DEFAULT_EMAIL=${PGADMIN_DEFAULT_EMAIL}
       - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_DEFAULT_PASSWORD}
     ports:
-      - "8080:80"
+      - "8082:80"
     depends_on:
       - db
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
-  nginx:
+  nginx-test:
     image: nginx:latest
     depends_on:
       - web
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx-test/test.conf:/etc/nginx/conf.d/test.conf # Use test.conf for the test branch
     ports:
-      - "8081:80"
+      - "8083:80" # Use a different port to avoid conflict with the main branch Nginx
     restart: always
 
 volumes:
