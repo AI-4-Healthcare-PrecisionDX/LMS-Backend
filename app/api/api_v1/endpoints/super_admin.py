@@ -161,11 +161,13 @@ def create_branch(
     Create new branch.
     """
     try:
+        print(f"Received branch data: {branch_in.dict()}")  # Log received data
         branch = crud.branch.create_branch(db, obj_in=branch_in)
     except Exception as e:
+        print(f"Error creating branch: {str(e)}")  # Log the specific error
         raise HTTPException(
             status_code=500,
-            detail="An error occurred while creating the branch",
+            detail=f"An error occurred while creating the branch: {str(e)}",
         )
     return branch
 
@@ -265,7 +267,7 @@ def read_departments(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_superuser),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve departments.
@@ -327,3 +329,6 @@ def update_department(
         db, db_obj=department, obj_in=department_in
     )
     return department
+
+
+

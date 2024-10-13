@@ -74,6 +74,7 @@ class CRUDBranch(CRUDBase[Branch, BranchCreate, BranchUpdate]):
             branch_email=obj_in.branch_email,
             branch_website=obj_in.branch_website,
             branch_fax=obj_in.branch_fax,
+            institution_id=obj_in.institution_id,
         )
         db.add(db_obj)
         db.commit()
@@ -108,6 +109,7 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
     def create_department(self, db: Session, *, obj_in: DepartmentCreate) -> Department:
         db_obj = Department(
             department_name=obj_in.department_name,
+            branch_id=obj_in.branch_id,
         )
         db.add(db_obj)
         db.commit()

@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
-
+from .user import User
 
 # For Departments
 class DepartmentBase(BaseModel):
@@ -11,7 +11,7 @@ class DepartmentBase(BaseModel):
 
 class DepartmentCreate(DepartmentBase):
     department_name: str
-
+    branch_id: UUID
 
 class DepartmentUpdate(DepartmentBase):
     pass
@@ -19,6 +19,7 @@ class DepartmentUpdate(DepartmentBase):
 
 class DepartmentInDBBase(DepartmentBase):
     department_id: Optional[UUID] = None
+    branch_id: Optional[UUID] = None
     updated_at: Optional[datetime] = None
 
     class Config:
@@ -44,6 +45,7 @@ class BranchCreate(BranchBase):
     branch_address: str
     branch_contact: str
     branch_email: str
+    institution_id: UUID
 
 
 class BranchUpdate(BranchBase):
@@ -54,6 +56,7 @@ class BranchUpdate(BranchBase):
 class BranchInDBBase(BranchBase):
     branch_id: Optional[UUID] = None
     branch_is_active: Optional[bool] = True
+    institution_id: Optional[UUID] = None
     updated_at: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
