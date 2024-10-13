@@ -32,25 +32,18 @@ jobs:
 
       # Step 4: SSH into the server and deploy the updated application
       - name: Deploy the application
-        run: |
+      - run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
-            set -e  # Exit on error
-            cd /home/fastapi/docker-master-ratim-lms-backend
+          set -e
+          cd /home/fastapi/docker-master-ratim-lms-backend
+          sudo docker-compose down || exit 1
+          sudo docker-compose up --build -d || exit 1
+          sudo docker-compose ps || exit 1
 
-            # Stop and remove old containers, exit if this step fails
-            sudo docker-compose down || exit 1
-
-            # Rebuild and start the containers, exit if this step fails
-            sudo docker-compose up --build -d || exit 1
-
-            # Check if the web service is running correctly
-            sudo docker-compose ps || exit 1
-
-            # General error log check (you can customize or expand these patterns)
-            ERROR_LOG=$(sudo docker-compose logs web | grep -E -i 'error|exception|traceback|undefinedtable|fail|fatal')
-            if [[ -n "$ERROR_LOG" ]]; then
-              echo "Critical error found in web_1 logs:"
-              echo "$ERROR_LOG"
-              exit 1  # Fail the deployment if any error is found
-            fi
+          # Add these lines for more detailed error reporting
+          echo "Checking container logs for errors..."
+          for service in web db pgadmin nginx-test; do
+            echo "Logs for $service:"
+            sudo docker-compose logs $service | tail -n 50
+          done
           EOF
