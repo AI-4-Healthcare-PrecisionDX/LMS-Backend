@@ -1,4 +1,4 @@
-name: "application is live at https://dev-lms-backend.diagnotech-ai.com/"
+name: "application is live at http://203.161.38.194:8082/"
 
 on:
   push:
