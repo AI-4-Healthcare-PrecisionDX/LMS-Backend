@@ -64,7 +64,7 @@ jobs:
               return 0
             }
 
-            services=("web" "db" "pgadmin" "nginx-test")
+            services=("web" "db" "pgadmin" "nginx")
             failed=false
 
             for service in "${services[@]}"; do
