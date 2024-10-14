@@ -36,12 +36,12 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
-  nginx-test:
+  nginx:
     image: nginx:latest
     depends_on:
       - web
     volumes:
-      - ./nginx-test/test.conf:/etc/nginx/conf.d/test.conf # Use test.conf for the test branch
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/test.conf # Use test.conf for the test branch
     ports:
       - "8083:80" # Use a different port to avoid conflict with the main branch Nginx
     restart: always
