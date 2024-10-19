@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, UploadFile, File
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
@@ -56,14 +56,16 @@ def update_user_me(
     Update own user.
     """
     if user_in.email is not None and user_in.email != current_user.email:
-        raise HTTPException( status_code=400, detail="Users are not allowed to change their email address.")
+        raise HTTPException(
+            status_code=400,
+            detail="Users are not allowed to change their email address.",
+        )
 
-    
     try:
         updated_user = crud.user.update(db, db_obj=current_user, obj_in=user_in)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
+
     return updated_user
 
 
@@ -76,6 +78,20 @@ def read_user_me(
     Get current user.
     """
     return current_user
+
+
+# File upload
+@router.post("/upload")
+def upload_file(
+    file: UploadFile = File(...),
+    json_file: UploadFile = File(...),
+):
+    if (
+        file.content_type != "application/pdf"
+        or json_file.content_type != "application/json"
+    ):
+        raise HTTPException(status_code=400, detail="Only PDF and JSON files allowed")
+    return {"filename": file.filename, "json_filename": json_file.filename}
 
 
 # @router.post("/open", response_model=schemas.User)
