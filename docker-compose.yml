@@ -8,6 +8,8 @@ services:
       - ./:/code:ro
     environment:
       - SQLALCHEMY_DATABASE_URI=${SQLALCHEMY_DATABASE_URI}
+      - GOOGLE_APPLICATION_CREDENTIALS=/code/lms_credential.json
+
     ports:
       - "8000:8000"
     command: >

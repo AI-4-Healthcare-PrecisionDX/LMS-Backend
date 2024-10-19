@@ -1,12 +1,27 @@
+import datetime
 from typing import Any, List
-
-from fastapi import APIRouter, Body, Depends, HTTPException, UploadFile, File
+import json
+from fastapi import (
+    APIRouter,
+    Body,
+    Depends,
+    HTTPException,
+    UploadFile,
+    File,
+    BackgroundTasks,
+)
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
+from google.cloud import storage
+import uuid
+from PyPDF2 import PdfReader
+from io import BytesIO
+
 
 from app import crud, models, schemas
 from app.api import deps
+from app.core.config import settings
 
 router = APIRouter()
 
@@ -80,18 +95,82 @@ def read_user_me(
     return current_user
 
 
+@router.get("/files")
+def read_files():
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        # 0012708b-40dc-41 is the folder name
+        blobs = bucket.list_blobs(prefix="0012708b-40dc-41")
+        json_data = None
+        pdf_blob = None
+        for blob in blobs:
+            if blob.name.endswith(".json"):
+                json_blob = blob.download_as_bytes()
+                json_data = json.loads(json_blob.decode("utf-8"))
+            if blob.name.endswith(".pdf"):
+                pdf_blob = blob.download_as_bytes()
+
+        if json_data is None:
+            raise HTTPException(status_code=404, detail="JSON file not found")
+        if pdf_blob is None:
+            raise HTTPException(status_code=404, detail="PDF file not found")
+    except json.JSONDecodeError as e:
+        print(f"JSON decode error: {e}")
+        raise HTTPException(
+            status_code=500, detail="An error occurred while parsing JSON file"
+        )
+    except Exception as e:
+        print(f"Error fetching files: {e}")
+        raise HTTPException(
+            status_code=500, detail="An error occurred while fetching files"
+        )
+
+    try:
+        pdf_file = BytesIO(pdf_blob)
+        pdf_reader = PdfReader(pdf_file)
+        pdf_text = ""
+        for page in pdf_reader.pages:
+            pdf_text += page.extract_text()
+    except Exception as e:
+        print(f"Error reading PDF: {e}")
+        raise HTTPException(
+            status_code=500, detail="An error occurred while reading PDF file"
+        )
+
+    return {"content": json_data, "pdf": pdf_text}
+
+
 # File upload
 @router.post("/upload")
 def upload_file(
-    file: UploadFile = File(...),
+    pdf_file: UploadFile = File(...),
     json_file: UploadFile = File(...),
 ):
     if (
-        file.content_type != "application/pdf"
+        pdf_file.content_type != "application/pdf"
         or json_file.content_type != "application/json"
     ):
         raise HTTPException(status_code=400, detail="Only PDF and JSON files allowed")
-    return {"filename": file.filename, "json_filename": json_file.filename}
+
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        # create a folder in the bucket with a unique name using uuid upto 16 characters
+        folder_name = str(uuid.uuid4())[:16]
+        folder = bucket.blob(folder_name)
+        # upload the files to the folder
+        pdf_blob = bucket.blob(f"{folder_name}/{pdf_file.filename}")
+        pdf_blob.upload_from_file(pdf_file.file)
+        json_blob = bucket.blob(f"{folder_name}/{json_file.filename}")
+        json_blob.upload_from_file(json_file.file)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while uploading. Please try again.",
+        )
+
+    return f"Files uploaded successfully to {folder_name}"
 
 
 # @router.post("/open", response_model=schemas.User)
