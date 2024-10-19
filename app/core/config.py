@@ -35,9 +35,12 @@ class Settings(BaseSettings):
     FIRST_SUPERUSER_PASSWORD: str
     FIRST_SUPERUSER_FirstName: str
     FIRST_SUPERUSER_LastName: str
-    
-    PGADMIN_DEFAULT_EMAIL : EmailStr
-    PGADMIN_DEFAULT_PASSWORD : str
+
+    PGADMIN_DEFAULT_EMAIL: EmailStr
+    PGADMIN_DEFAULT_PASSWORD: str
+
+    GOOGLE_APPLICATION_CREDENTIALS: str
+    GOOGLE_STORAGE_BUCKET: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
