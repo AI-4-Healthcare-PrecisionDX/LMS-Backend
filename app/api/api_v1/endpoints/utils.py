@@ -27,7 +27,7 @@ from app.core.config import settings
 router = APIRouter()
 
 
-@router.post("/file_upload", response_model=schemas.Library)
+@router.post("library/file_upload", response_model=schemas.Library)
 def upload_file(
     db: Session = Depends(deps.get_db),
     pdf_file: UploadFile = File(...),
