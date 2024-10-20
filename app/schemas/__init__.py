@@ -17,3 +17,10 @@ from .course import (
     TemplateCourseCreate,
     TemplateCourseUpdate,
 )
+
+from .library import (
+    Library,
+    LibraryCreate,
+    LibraryUpdate,
+    LibraryInDBBase,
+)
