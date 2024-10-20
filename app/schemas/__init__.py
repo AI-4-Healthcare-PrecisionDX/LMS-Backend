@@ -17,3 +17,10 @@ from .course import (
     TemplateCourseCreate,
     TemplateCourseUpdate,
 )
+
+from .section import (
+    SectionBase,
+    SectionCreate,
+    SectionUpdate,
+
+)
