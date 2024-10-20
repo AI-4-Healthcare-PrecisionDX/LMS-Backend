@@ -5,3 +5,4 @@ __pycache__/
 venv/
 .env
 postgres_data/
+lms_credentials.json
