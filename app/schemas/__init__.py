@@ -18,9 +18,18 @@ from .course import (
     TemplateCourseUpdate,
 )
 
+
 from .section import (
     SectionBase,
     SectionCreate,
     SectionUpdate,
 
 )
+
+from .library import (
+    Library,
+    LibraryCreate,
+    LibraryUpdate,
+    LibraryInDBBase,
+)
+
