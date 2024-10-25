@@ -7,7 +7,7 @@ from app.models.user import User
 import uuid
 
 
-class CRUDDiscussion(CRUDBase[Discussion, DiscussionCreate]):
+class CRUDDiscussion(CRUDBase[Discussion, DiscussionCreate, DiscussionCreate]): #DiscussionCreate has been used twice as no update is needed.
 
     def get_discussion_by_id(self, db: Session, *, id: str) -> Optional[Discussion]:
         return db.query(Discussion).filter(Discussion.discussion_id == id).first()
