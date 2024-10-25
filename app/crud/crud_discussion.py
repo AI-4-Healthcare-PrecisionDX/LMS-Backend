@@ -2,12 +2,12 @@ from typing import Any, Dict, Optional
 from sqlalchemy.orm import Session
 from app.crud.base import CRUDBase
 from app.models.discussion import Discussion
-from app.schemas.discussion import DiscussionCreate, DiscussionUpdate
+from app.schemas.discussion import DiscussionCreate
 from app.models.user import User
 import uuid
 
 
-class CRUDDiscussion(CRUDBase[Discussion, DiscussionCreate, DiscussionUpdate]):
+class CRUDDiscussion(CRUDBase[Discussion, DiscussionCreate]):
 
     def get_discussion_by_id(self, db: Session, *, id: str) -> Optional[Discussion]:
         return db.query(Discussion).filter(Discussion.discussion_id == id).first()

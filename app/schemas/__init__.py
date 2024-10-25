@@ -37,7 +37,6 @@ from .library import (
 from .discussion import (
     Discussion,
     DiscussionCreate,
-    DiscussionUpdate
 )
 
 from .discussion_message import (
