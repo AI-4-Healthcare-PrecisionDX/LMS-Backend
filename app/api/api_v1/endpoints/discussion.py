@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app import crud, models
 from app.api import deps
-from app.schemas.discussion import Discussion, DiscussionCreate , DiscussionUpdate 
+from app.schemas.discussion import Discussion, DiscussionCreate
 
 router = APIRouter()
 

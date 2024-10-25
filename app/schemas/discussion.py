@@ -11,11 +11,6 @@ class DiscussionCreate(BaseModel):
 
 
 
-class DiscussionUpdate(BaseModel):
-    section_id: Optional[UUID] = None
-
-
-
 class Discussion(BaseModel):
     discussion_id: UUID
     section_id: UUID
