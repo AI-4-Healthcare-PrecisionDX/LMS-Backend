@@ -33,3 +33,21 @@ from .library import (
     LibraryInDBBase,
 )
 
+
+from .discussion import (
+    Discussion,
+    DiscussionCreate,
+    DiscussionUpdate
+)
+
+from .discussion_message import (
+    DiscussionMessage,
+    DiscussionMessageCreate,
+    DiscussionMessageBase
+)
+
+from .discussion_reply_message import (
+    DiscussionReplyMessage,
+    DiscussionReplyMessageCreate,
+    DiscussionReplyMessageBase
+)

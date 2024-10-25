@@ -6,3 +6,5 @@ from .crud_section import section
 
 from .crud_utils import library
 
+from .crud_discussion import discussion
+
