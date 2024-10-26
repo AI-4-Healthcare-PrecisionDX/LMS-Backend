@@ -33,3 +33,14 @@ from .library import (
     LibraryInDBBase,
 )
 
+
+from .assignment import (
+    AssignmentBase,
+    AssignmentCreate,
+    AssignmentUpdate,
+    AssignmentOut,
+    AssignmentQuestionBase,
+    AssignmentQuestionCreate,
+    AssignmentQuestionUpdate,
+    AssignmentQuestionOut,
+)
