@@ -1,3 +1,5 @@
+#app/models/template_course.py
+
 from sqlalchemy import Boolean, Column, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -34,3 +36,5 @@ class TemplateCourse(Base):
     sections = relationship("Section", back_populates="template_course")
     
     course_materials = relationship("CourseMaterials", back_populates="template_course")
+    
+    template_course_access = relationship("TemplateCourseAccess", back_populates="template_course")

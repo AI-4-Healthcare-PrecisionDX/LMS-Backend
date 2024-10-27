@@ -1,3 +1,5 @@
+#app/models/teacher.py
+
 from sqlalchemy import  Column, ForeignKey, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -23,3 +25,5 @@ class Teacher(Base):
     user = relationship("User", back_populates="teacher")
     
     sections = relationship("Section", back_populates="teacher")
+    
+    template_course_access = relationship("TemplateCourseAccess", back_populates="teacher")

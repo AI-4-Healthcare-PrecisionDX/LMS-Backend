@@ -1,3 +1,5 @@
+#app/crud/crud_user.py
+
 from typing import Any, Dict, Optional
 
 from sqlalchemy.orm import Session
@@ -6,7 +8,7 @@ from app.core.security import get_password_hash, verify_password
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.models.user_settings import UserSettings
-from app.schemas.user import UserCreate, UserUpdate, UserCreateBySuperUser,UserCreateTeacher,UserCreateStudent, UserInDBStudent, UserInDBTeacher
+from app.schemas.user import UserCreate, UserUpdate, UserCreateBySuperUser,UserCreateTeacher,UserCreateStudent, Student, Teacher
 from app.models.admin import Admin
 from app.models.teacher import Teacher
 from app.models.student import Student
@@ -43,7 +45,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return db_obj
     
     
-    def create_teacher(self, db: Session, *, obj_in: UserCreateTeacher) -> UserInDBTeacher:
+    def create_teacher(self, db: Session, *, obj_in: UserCreateTeacher) -> Teacher:
         unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
         db_obj = User(
             email=obj_in.email,
@@ -70,8 +72,23 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(user_settings)
         
         return db_obj
+    
+    def get_teacher_by_id(self, db: Session, *, id: uuid) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
+        return db.query(Teacher).filter(Teacher.teacher_id == id).first()
+    
+    def get_student_by_id(self, db: Session, *, id: uuid) -> Optional[Student]:  # Keep consistent naming
+        return db.query(Student).filter(Student.student_id == id).first()
+    
+    def get_all_teachers(self, db: Session, *, skip: int = 0, limit: int = 100) -> list[Teacher]:
+        teachers = db.query(Teacher).offset(skip).limit(limit).all()
+        return teachers
+    
+    def get_all_students(self, db: Session, *, skip: int = 0, limit: int = 100) -> list[Student]:
+        students = db.query(Student).offset(skip).limit(limit).all()
+        return students
 
-    def create_student(self, db: Session, *, obj_in: UserCreateStudent) -> UserInDBStudent:
+
+    def create_student(self, db: Session, *, obj_in: UserCreateStudent) -> Student:
         unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
         db_obj = User(
             email=obj_in.email,
