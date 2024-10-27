@@ -1,3 +1,5 @@
+#app/models/template_course_materials.py
+
 from sqlalchemy import  Column, ForeignKey, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship

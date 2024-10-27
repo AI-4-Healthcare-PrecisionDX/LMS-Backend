@@ -1,3 +1,5 @@
+#app/schemas/user.py
+
 from typing import Optional
 from uuid import UUID
 from pydantic import BaseModel, EmailStr
@@ -47,9 +49,18 @@ class UserInDBBase(UserBase):
         from_attributes = True
         
 class UserInDBStudent(UserInDBBase):
+    student_id: UUID
     metric_id: str
     
+    
+class Student(UserInDBStudent):
+    pass
+    
 class UserInDBTeacher(UserInDBBase):
+    teacher_id: UUID
+    pass
+
+class Teacher(UserInDBTeacher):
     pass
 
 

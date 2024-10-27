@@ -6,7 +6,7 @@ from .super_admin import (
     DepartmentUpdate,
     Branch,
     BranchCreate,
-    https://github.com/AI-4-Healthcare-PrecisionDX/LMS-Backend/pull/25/conflict?name=app%252Fschemas%252F__init__.py&ancestor_oid=c86dff74efd5b72efff75291feb2468242c75b88&base_oid=bb7a83ac5ea1d576d8fc37427310a3ca90582125&head_oid=0d20baadba6c60b85647211c1a30f3f1f77db46bBranchUpdate,
+    BranchUpdate,
     Institution,
     InstitutionCreate,
     InstitutionUpdate,
