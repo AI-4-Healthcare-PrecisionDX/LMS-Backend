@@ -1,4 +1,6 @@
 from typing import Any, Dict, Optional
+from uuid import UUID
+
 
 from sqlalchemy.orm import Session
 
@@ -9,11 +11,10 @@ from app.models.branch import Branch
 from app.schemas.super_admin import BranchCreate, BranchUpdate
 from app.models.department import Department
 from app.schemas.super_admin import DepartmentCreate, DepartmentUpdate
-import uuid
 
 
 class CRUDInstitution(CRUDBase[Institution, InstitutionCreate, InstitutionUpdate]):
-    def get_institution_by_id(self, db: Session, *, id: str) -> Optional[Institution]:
+    def get_institution_by_id(self, db: Session, *, id: UUID) -> Optional[Institution]:
         return db.query(Institution).filter(Institution.institution_id == id).first()
 
     def get_institution_by_email(
@@ -60,13 +61,15 @@ class CRUDInstitution(CRUDBase[Institution, InstitutionCreate, InstitutionUpdate
 
 
 class CRUDBranch(CRUDBase[Branch, BranchCreate, BranchUpdate]):
-    def get_branch_by_id(self, db: Session, *, id: str) -> Optional[Branch]:
+    def get_branch_by_id(self, db: Session, *, id: UUID) -> Optional[Branch]:
         return db.query(Branch).filter(Branch.branch_id == id).first()
 
     def get_branch_by_email(self, db: Session, *, email: str) -> Optional[Branch]:
         return db.query(Branch).filter(Branch.email == email).first()
 
-    def create_branch(self, db: Session, *, obj_in: BranchCreate) -> Branch:
+    def create_branch(
+        self, db: Session, *, obj_in: BranchCreate, institution_id: UUID
+    ) -> Branch:
         db_obj = Branch(
             branch_name=obj_in.branch_name,
             branch_address=obj_in.branch_address,
@@ -74,7 +77,7 @@ class CRUDBranch(CRUDBase[Branch, BranchCreate, BranchUpdate]):
             branch_email=obj_in.branch_email,
             branch_website=obj_in.branch_website,
             branch_fax=obj_in.branch_fax,
-            institution_id=obj_in.institution_id,
+            institution_id=institution_id,
         )
         db.add(db_obj)
         db.commit()
@@ -98,7 +101,7 @@ class CRUDBranch(CRUDBase[Branch, BranchCreate, BranchUpdate]):
 
 
 class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
-    def get_department_by_id(self, db: Session, *, id: str) -> Optional[Department]:
+    def get_department_by_id(self, db: Session, *, id: UUID) -> Optional[Department]:
         return db.query(Department).filter(Department.department_id == id).first()
 
     def get_department_by_email(
@@ -129,7 +132,7 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
             update_data = obj_in.model_dump(exclude_unset=True)
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
-    def delete_department(self, db: Session, *, id: str) -> Department:
+    def delete_department(self, db: Session, *, id: UUID) -> Department:
         department = db.query(Department).filter(Department.department_id == id).first()
         db.delete(department)
         db.commit()
