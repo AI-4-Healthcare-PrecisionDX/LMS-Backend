@@ -1,3 +1,5 @@
+# app/models/user.py
+
 from sqlalchemy import Boolean, Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -32,16 +34,25 @@ class User(Base):
     branch_id = Column(UUID(as_uuid=True), ForeignKey("branch.branch_id"))
     branch = relationship("Branch", back_populates="users")
 
-    settings = relationship("UserSettings", back_populates="user")
-    admin = relationship("Admin", back_populates="user")
-    teacher = relationship("Teacher", back_populates="user")
-    student = relationship("Student", back_populates="user")
+    settings = relationship(
+        "UserSettings", back_populates="user", uselist=False
+    )  # One to One relationship
+    admin = relationship(
+        "Admin", back_populates="user", uselist=False
+    )  # One to One relationship
+    teacher = relationship(
+        "Teacher", back_populates="user", uselist=False
+    )  # One to One relationship
+    student = relationship(
+        "Student", back_populates="user", uselist=False
+    )  # One to One relationship
 
     global_library_items = relationship("GlobalLibrary", back_populates="user")
-    
+
     course_materials = relationship("CourseMaterials", back_populates="user")
-    
+
     discussion_messages = relationship("DiscussionMessage", back_populates="user")
-    
-    discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="user")
-    
+
+    discussion_reply_messages = relationship(
+        "DiscussionReplyMessage", back_populates="user"
+    )

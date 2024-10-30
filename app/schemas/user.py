@@ -3,6 +3,8 @@ from uuid import UUID
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
+from app.models.teacher import Teacher as TeacherModel
+
 
 # Shared properties
 class UserBase(BaseModel):
@@ -17,13 +19,15 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     email: EmailStr
     password: str
-    
-    
+
+
 class UserCreateStudent(UserCreate):
-    metric_id : str
-    
+    metric_id: str
+
+
 class UserCreateTeacher(UserCreate):
     pass
+
 
 class UserCreateBySuperUser(UserBase):
     email: EmailStr
@@ -37,6 +41,7 @@ class UserUpdate(UserBase):
 
 class UserInDBBase(UserBase):
     user_id: Optional[UUID] = None
+    branch_id: Optional[UUID] = None
     username: Optional[str] = None
     role: Optional[str] = None
     is_active: Optional[bool] = True
@@ -45,12 +50,31 @@ class UserInDBBase(UserBase):
 
     class Config:
         from_attributes = True
-        
+
+
 class UserInDBStudent(UserInDBBase):
+    student_id: UUID
     metric_id: str
-    
-class UserInDBTeacher(UserInDBBase):
+
+
+class Student(UserInDBStudent):
     pass
+
+
+class UserInDBTeacher(UserInDBBase):
+    teacher_id: UUID
+    pass
+
+
+class TeacherBase(BaseModel):
+    teacher_id: Optional[UUID] = None
+
+
+class Teacher(UserInDBBase):
+    teacher: Optional[TeacherBase] = None
+
+    class Config:
+        from_attributes = True
 
 
 # Additional properties to return via API

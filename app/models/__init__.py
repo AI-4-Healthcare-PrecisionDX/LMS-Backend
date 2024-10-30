@@ -18,3 +18,4 @@ from .discussion_message import DiscussionMessage
 from .discussion_reply_message import DiscussionReplyMessage
 from .assignment_question import AssignmentQuestion
 from .assignment_submission import AssignmentSubmission
+from .template_course_access import TemplateCourseAccess

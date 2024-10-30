@@ -4,6 +4,7 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from .user import User
 
+
 # For Departments
 class DepartmentBase(BaseModel):
     department_name: Optional[str] = None
@@ -11,7 +12,7 @@ class DepartmentBase(BaseModel):
 
 class DepartmentCreate(DepartmentBase):
     department_name: str
-    branch_id: UUID
+
 
 class DepartmentUpdate(DepartmentBase):
     pass
@@ -45,7 +46,6 @@ class BranchCreate(BranchBase):
     branch_address: str
     branch_contact: str
     branch_email: str
-    institution_id: UUID
 
 
 class BranchUpdate(BranchBase):

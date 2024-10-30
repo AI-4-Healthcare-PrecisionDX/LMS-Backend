@@ -1,9 +1,10 @@
 from typing import Any, List
-
+from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
+
 
 from app import crud, models, schemas
 from app.api import deps
@@ -12,15 +13,16 @@ router = APIRouter()
 
 
 # Create a user as admin user
-@router.post("/create-admin", response_model=schemas.User)
+@router.post("/create-admin/{branch_id}", response_model=schemas.User)
 def create_admin_user(
     *,
     db: Session = Depends(deps.get_db),
     user_in: schemas.UserCreateBySuperUser,
+    branch_id: UUID,
     current_user: models.User = Depends(deps.get_current_active_superuser),
-) -> Any:
+) -> schemas.User:
     """
-    Create new user.
+    Create a new user as admin for particular institution using institution branch id.
     """
     # Check if the user already exists
     try:
@@ -37,8 +39,21 @@ def create_admin_user(
             detail="The user with this email already exists in the system",
         )
 
+    # Check if the branch exists
     try:
-        user = crud.user.create_by_superuser(db, obj_in=user_in)
+        branch = crud.branch.get_branch_by_id(db, id=branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the branch",
+        )
+
+    if branch is None:
+        raise HTTPException(status_code=404, detail="Branch not found")
+
+    # Create a user
+    try:
+        user = crud.user.create_by_superuser(db, obj_in=user_in, branch_id=branch_id)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -65,7 +80,7 @@ def create_institution(
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
-    Create new institution.
+    Create a new institution (Only for Super Admin).
     """
     try:
         institution = crud.institution.create_institution(db, obj_in=institution_in)
@@ -88,7 +103,6 @@ def read_institutions(
     """
     Retrieve institutions.
     """
-    print("Current user: ", current_user)
     try:
         institutions = crud.institution.get_multi(db, skip=skip, limit=limit)
     except Exception as e:
@@ -127,7 +141,7 @@ def read_institution_by_id(
 def update_institution(
     *,
     db: Session = Depends(deps.get_db),
-    institution_id: str,
+    institution_id: UUID,
     institution_in: schemas.InstitutionUpdate,
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
@@ -150,24 +164,36 @@ def update_institution(
 
 
 # Create a new branch
-@router.post("/create_branch", response_model=schemas.Branch)
+@router.post("/create_branch/{institution_id}", response_model=schemas.Branch)
 def create_branch(
     *,
     db: Session = Depends(deps.get_db),
     branch_in: schemas.BranchCreate,
+    institution_id: UUID,
     current_user: models.User = Depends(deps.get_current_active_superuser),
 ) -> Any:
     """
     Create new branch.
     """
     try:
-        print(f"Received branch data: {branch_in.dict()}")  # Log received data
-        branch = crud.branch.create_branch(db, obj_in=branch_in)
+        get_institution = crud.institution.get_institution_by_id(db, id=institution_id)
     except Exception as e:
-        print(f"Error creating branch: {str(e)}")  # Log the specific error
         raise HTTPException(
             status_code=500,
-            detail=f"An error occurred while creating the branch: {str(e)}",
+            detail="An error occurred while retrieving the institution",
+        )
+
+    if get_institution is None:
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+    try:
+        branch = crud.branch.create_branch(
+            db, obj_in=branch_in, institution_id=institution_id
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while creating the branch",
         )
     return branch
 
@@ -252,6 +278,17 @@ def create_department(
     Create new department.
     """
     try:
+        get_branch = crud.branch.get_branch_by_id(db, id=department_in.branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the branch",
+        )
+
+    if get_branch is None:
+        raise HTTPException(status_code=404, detail="Branch not found")
+
+    try:
         department = crud.department.create_department(db, obj_in=department_in)
     except Exception as e:
         raise HTTPException(
@@ -329,6 +366,3 @@ def update_department(
         db, db_obj=department, obj_in=department_in
     )
     return department
-
-
-
