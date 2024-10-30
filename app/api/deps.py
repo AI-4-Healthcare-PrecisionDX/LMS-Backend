@@ -1,6 +1,6 @@
 from typing import Generator
-
-from fastapi import Depends, HTTPException, status
+from uuid import UUID
+from fastapi import Depends, HTTPException, status, Path
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from pydantic import ValidationError
@@ -51,6 +51,23 @@ def get_current_active_user(
     return current_user
 
 
+def get_current_active_admin_user(
+    current_user: models.User = Depends(get_current_active_user),
+    branch_id: UUID = Path(...),
+) -> models.User:
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+
+    if current_user.branch_id != branch_id:
+        raise HTTPException(
+            status_code=403, detail="You do not have permission to perform this action"
+        )
+
+    return current_user
+
+
 def get_current_active_superuser(
     current_user: models.User = Depends(get_current_user),
 ) -> models.User:
@@ -59,3 +76,21 @@ def get_current_active_superuser(
             status_code=400, detail="The user doesn't have enough privileges"
         )
     return current_user
+
+
+def check_branch(
+    branch_id: UUID = Path(...),
+    db: Session = Depends(get_db),
+) -> UUID:
+    """
+    Verify if branch exists and return branch_id if valid.
+    """
+    branch = crud.branch.get_branch_by_id(db, id=branch_id)
+
+    if not branch:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Branch not found",
+        )
+
+    return branch_id

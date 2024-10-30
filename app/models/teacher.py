@@ -1,6 +1,6 @@
-#app/models/teacher.py
+# app/models/teacher.py
 
-from sqlalchemy import  Column, ForeignKey, String, DateTime, Boolean
+from sqlalchemy import Column, ForeignKey, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
@@ -17,13 +17,17 @@ class Teacher(Base):
         unique=True,
         index=True,
     )
-    
+
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
-    user = relationship("User", back_populates="teacher")
-    
+    user = relationship(
+        "User", back_populates="teacher", uselist=False
+    )  # One to One relationship
+
     sections = relationship("Section", back_populates="teacher")
-    
-    template_course_access = relationship("TemplateCourseAccess", back_populates="teacher")
+
+    template_course_access = relationship(
+        "TemplateCourseAccess", back_populates="teacher"
+    )
