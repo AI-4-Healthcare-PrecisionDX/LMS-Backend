@@ -9,3 +9,7 @@ from .crud_assignment import assignment, assignment_question
 
 from .crud_discussion import discussion
 
+from .crud_discussion_msg import discussion_message
+
+from .crud_discussion_rply_msg import discussion_reply_message
+
