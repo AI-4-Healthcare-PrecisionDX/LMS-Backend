@@ -1,44 +1,53 @@
-from typing import Optional
+# app/schemas/assignment.py
+from typing import Optional, List
 from uuid import UUID
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from datetime import datetime
 
-
-
-
+# Assignment Question Schemas
 class AssignmentQuestionBase(BaseModel):
-    question_type: Optional[str] = None
-    question_text: Optional[str] = None
-    question_answer: Optional[str] = None
-    options_for_mcq: Optional[str] = None
-    marks: Optional[str] = None
-    question_description: Optional[str] = None
-    
-    
-class AssignmentQuestionCreate(AssignmentQuestionBase):
     question_type: str
     question_text: str
-    question_answer: str
-    marks: str
-    assignment_id: UUID
-    
+    expected_answer: str
+    options_for_mcq: Optional[List[str]] = None
+    marks: int
+    question_description: Optional[str] = None
 
-class AssignmentQuestionUpdate(AssignmentQuestionBase):
+class AssignmentQuestionCreate(AssignmentQuestionBase):
     pass
 
-class AssignmentQuestionOut(AssignmentQuestionBase):
-    question_id: UUID
-    updated_at: datetime
-    created_at: datetime
+class AssignmentQuestionUpdate(BaseModel):
+    question_type: Optional[str] = None
+    question_text: Optional[str] = None
+    expected_answer: Optional[str] = None
+    options_for_mcq: Optional[List[str]] = None
+    marks: Optional[int] = None
+    question_description: Optional[str] = None
+
+class AssignmentQuestionInDBBase(AssignmentQuestionBase):
+    assignment_question_id: UUID
     assignment_id: UUID
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
-        
-        
-        
 
+# Assignment Schemas
 class AssignmentBase(BaseModel):
+    assignment_type: str  # traditional / ai generated
+    assignment_title: str
+    assignment_description: Optional[str] = None
+    assignment_question_type: str
+    number_of_questions: int
+    total_marks: str
+    start_time: Optional[datetime] = None
+    deadline: datetime
+
+class AssignmentCreate(AssignmentBase):
+    section_id: UUID
+
+class AssignmentUpdate(BaseModel):
     assignment_type: Optional[str] = None
     assignment_title: Optional[str] = None
     assignment_description: Optional[str] = None
@@ -48,29 +57,18 @@ class AssignmentBase(BaseModel):
     start_time: Optional[datetime] = None
     deadline: Optional[datetime] = None
 
-class AssignmentCreate(AssignmentBase):
-    assignment_type: str
-    assignment_title: str
-    assignment_question_type: str
-    number_of_questions: int
-    total_marks: str
-    start_time: datetime
-    deadline: datetime
-    section_id: UUID
-    
-class AssignmentUpdate(AssignmentBase):
-    pass
-
-
-class AssignmentOut(AssignmentBase):
+class AssignmentInDBBase(AssignmentBase):
     assignment_id: UUID
-    updated_at: datetime
-    created_at: datetime
     section_id: UUID
-    questions : list[AssignmentQuestionOut]
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
-        
-        
-        
+
+# Response Models
+class AssignmentQuestion(AssignmentQuestionInDBBase):
+    pass
+
+class Assignment(AssignmentInDBBase):
+    questions: List[AssignmentQuestion] = []

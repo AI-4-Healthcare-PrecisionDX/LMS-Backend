@@ -90,9 +90,18 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     ) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
         return db.query(Teacher).filter(Teacher.teacher_id == id).first()
 
+    
+    def get_teacher_by_user_id(self, db: Session, *, id: uuid) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
+        return db.query(Teacher).filter(Teacher.user_id == id).first()
+    
+    def get_student_by_user_id(self, db: Session, *, id: uuid) -> Optional[Student]:  # Keep consistent naming
+        return db.query(Student).filter(Student.user_id == id).first()
+
+
     def get_student_by_id(
         self, db: Session, *, id: UUID
     ) -> Optional[Student]:  # Keep consistent naming
+
         return db.query(Student).filter(Student.student_id == id).first()
 
     def get_all_teachers(

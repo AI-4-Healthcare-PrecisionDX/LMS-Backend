@@ -24,7 +24,7 @@ def get_courses(
     """
     Retrieve all template courses.
     """
-    if current_user.role not in ["admin", "teacher"]:
+    if current_user.role not in ["admin"]:
         raise HTTPException(
             status_code=403,
             detail="Not enough permissions"
@@ -41,11 +41,13 @@ def get_department_courses(
     """
     Get all courses in a specific department.
     """
-    if current_user.role not in ["admin", "teacher"]:
+    if current_user.role not in ["admin"]:
         raise HTTPException(
             status_code=403,
             detail="Not enough permissions"
         )
+    
+    
     return crud.template_course.get_courses_by_department(
         db=db, department_id=department_id
     )
@@ -64,12 +66,22 @@ def get_course(
             status_code=403,
             detail="Not enough permissions"
         )
+        
+    if current_user.role == "teacher" and not crud.template_course.check_if_teacher_has_access(
+        db=db, template_course_id=course_id, user_id=current_user.user_id
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Not enough permissions"
+        )
+        
     course = crud.template_course.get_course_by_id(db=db, id=course_id)
     if not course:
         raise HTTPException(
             status_code=404,
             detail="Course not found"
         )
+        
     return course
 
 @router.post("/", response_model=TemplateCourse)
@@ -207,3 +219,5 @@ def delete_course(
             detail=str(e)
         )
     return {"message": "Course and associated records deleted successfully"}
+
+

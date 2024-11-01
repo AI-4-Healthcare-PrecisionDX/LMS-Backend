@@ -1,4 +1,8 @@
+
+#app/schemas/__init__.py
+
 from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperUser, Teacher
+
 from .token import Token, TokenPayload
 from .super_admin import (
     Department,
@@ -34,14 +38,12 @@ from .library import (
 
 
 from .assignment import (
-    AssignmentBase,
+    Assignment,
     AssignmentCreate,
     AssignmentUpdate,
-    AssignmentOut,
-    AssignmentQuestionBase,
+    AssignmentQuestion,
     AssignmentQuestionCreate,
     AssignmentQuestionUpdate,
-    AssignmentQuestionOut,
 )
 
 from .discussion import (
