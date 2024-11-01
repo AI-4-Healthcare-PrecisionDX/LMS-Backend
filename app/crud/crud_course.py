@@ -8,17 +8,23 @@ from app.models.template_course_access import TemplateCourseAccess
 from app.models.template_course_materials import CourseMaterials
 from app.models.admin import Admin
 from app.schemas.course import TemplateCourseCreate, TemplateCourseUpdate
-
+from app.models.teacher import Teacher
+from app.crud.crud_user import user
+from fastapi import HTTPException
 class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, TemplateCourseUpdate]):
     def get_course_by_id(self, db: Session, *, id: UUID) -> Optional[TemplateCourse]:
-        return db.query(TemplateCourse).filter(TemplateCourse.template_course_id == id).first()
+        return (
+            db.query(TemplateCourse)
+            .filter(TemplateCourse.template_course_id == id).first()
+        )
     
     def get_courses_by_department(
         self, db: Session, *, department_id: UUID
     ) -> List[TemplateCourse]:
-        return db.query(TemplateCourse).filter(
-            TemplateCourse.department_id == department_id
-        ).all()
+        return (
+            db.query(TemplateCourse)
+            .filter(TemplateCourse.department_id == department_id).all()
+        )
     
     def get_admin_by_user_id(self, db: Session, *, user_id: UUID) -> Optional[Admin]:
         return db.query(Admin).filter(Admin.user_id == user_id).first()
@@ -97,7 +103,6 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
                 teacher_ids=teacher_ids
             )
             
-            
         # Update materials if provided
         if library_item_ids is not None:
             db.query(CourseMaterials).filter(
@@ -112,8 +117,12 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
             )
         
         db.commit()
-        db.refresh(updated_course)
-        return updated_course
+        
+        # Refresh with related data
+        return (
+            db.query(TemplateCourse)
+            .filter(TemplateCourse.template_course_id == updated_course.template_course_id).first()
+        )
 
     def delete_course(self, db: Session, *, id: UUID) -> Dict[str, Any]:
         course = self.get_course_by_id(db=db, id=id)
@@ -133,5 +142,23 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         db.delete(course)
         db.commit()
         return {"message": "Course and associated records deleted successfully"}
+    
+    def check_if_teacher_has_access(self, db: Session, *, template_course_id: UUID, user_id: UUID) -> bool:
+        try:
+            teacher = user.get_teacher_by_user_id(db=db, id=user_id)
+            if not teacher:
+                HTTPException(status_code=404, detail="Teacher not found")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+        try:
+            template_course_access = db.query(TemplateCourseAccess).filter(
+                TemplateCourseAccess.template_course_id == template_course_id,
+                TemplateCourseAccess.teacher_id == teacher.teacher_id
+            ).first()
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+        return True if template_course_access else False
 
 template_course = CRUDTemplateCourse(TemplateCourse)

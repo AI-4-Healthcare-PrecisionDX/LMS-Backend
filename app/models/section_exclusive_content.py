@@ -19,10 +19,14 @@ class SectionExclusiveContent(Base):
         index=True,
     )
     
-    content_type = Column(String, nullable=True)
-    content_file = Column(String, nullable=False)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
-    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
+    user = relationship("User", back_populates="section_exclusive_contents")
     
     section_id = Column(UUID(as_uuid=True), ForeignKey("section.section_id"))
     section = relationship("Section", back_populates="section_exclusive_contents")
+    
+    library_item_id = Column(UUID(as_uuid=True), ForeignKey("global_library.library_id"))
+    library_item = relationship("GlobalLibrary", back_populates="section_exclusive_content")
+    
+
+

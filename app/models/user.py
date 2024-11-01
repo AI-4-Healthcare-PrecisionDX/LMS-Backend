@@ -47,3 +47,5 @@ class User(Base):
     
     discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="user")
     
+    section_exclusive_contents = relationship("SectionExclusiveContent", back_populates="user")
+    

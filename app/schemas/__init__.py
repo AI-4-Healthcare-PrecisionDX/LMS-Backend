@@ -1,3 +1,5 @@
+#app/schemas/__init__.py
+
 from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperUser
 from .token import Token, TokenPayload
 from .super_admin import (
@@ -34,16 +36,13 @@ from .library import (
 )
 
 
-
 from .assignment import (
-    AssignmentBase,
+    Assignment,
     AssignmentCreate,
     AssignmentUpdate,
-    AssignmentOut,
-    AssignmentQuestionBase,
+    AssignmentQuestion,
     AssignmentQuestionCreate,
     AssignmentQuestionUpdate,
-    AssignmentQuestionOut,
 )
 
 from .discussion import (
