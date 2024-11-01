@@ -1,18 +1,23 @@
-#app/crud/crud_user.py
-
 from typing import Any, Dict, Optional
-
+from uuid import UUID, uuid4
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash, verify_password
 from app.crud.base import CRUDBase
 from app.models.user import User
 from app.models.user_settings import UserSettings
-from app.schemas.user import UserCreate, UserUpdate, UserCreateBySuperUser,UserCreateTeacher,UserCreateStudent, Student, Teacher
+from app.schemas.user import (
+    UserCreate,
+    UserUpdate,
+    UserCreateBySuperUser,
+    UserCreateTeacher,
+    UserCreateStudent,
+    Student,
+    Teacher,
+)
 from app.models.admin import Admin
 from app.models.teacher import Teacher
 from app.models.student import Student
-import uuid
 
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
@@ -23,7 +28,9 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return db.query(User).filter(User.user_id == id).first()
 
     def create(self, db: Session, *, obj_in: UserCreate) -> User:
-        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+        unique_username = (
+            f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid4().hex[:5]}"
+        )
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),
@@ -43,10 +50,13 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.refresh(user_settings)
 
         return db_obj
-    
-    
-    def create_teacher(self, db: Session, *, obj_in: UserCreateTeacher) -> Teacher:
-        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+
+    def create_teacher(
+        self, db: Session, *, obj_in: UserCreateTeacher, branch_id: UUID
+    ) -> User:
+        unique_username = (
+            f"{obj_in.first_name.lower()}_{obj_in.last_name.lower()}_{uuid4().hex[:5]}"
+        )
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),
@@ -56,46 +66,67 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             phone_number=obj_in.phone_number,
             gender=obj_in.gender,
             role="teacher",
+            branch_id=branch_id,
         )
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
-        
+
         teacher = Teacher(user_id=db_obj.user_id)
         db.add(teacher)
         db.commit()
         db.refresh(teacher)
-        
+
         user_settings = UserSettings(user_id=db_obj.user_id)
         db.add(user_settings)
         db.commit()
         db.refresh(user_settings)
-        
-        return db_obj
-    
-    def get_teacher_by_id(self, db: Session, *, id: uuid) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
+
+        result = db.query(User).filter(User.user_id == db_obj.user_id).first()
+        return result
+
+    def get_teacher_by_id(
+        self, db: Session, *, id: UUID
+    ) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
         return db.query(Teacher).filter(Teacher.teacher_id == id).first()
+
     
     def get_teacher_by_user_id(self, db: Session, *, id: uuid) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
         return db.query(Teacher).filter(Teacher.user_id == id).first()
     
     def get_student_by_user_id(self, db: Session, *, id: uuid) -> Optional[Student]:  # Keep consistent naming
         return db.query(Student).filter(Student.user_id == id).first()
-    
-    def get_student_by_id(self, db: Session, *, id: uuid) -> Optional[Student]:  # Keep consistent naming
+
+
+    def get_student_by_id(
+        self, db: Session, *, id: UUID
+    ) -> Optional[Student]:  # Keep consistent naming
+
         return db.query(Student).filter(Student.student_id == id).first()
-    
-    def get_all_teachers(self, db: Session, *, skip: int = 0, limit: int = 100) -> list[Teacher]:
-        teachers = db.query(Teacher).offset(skip).limit(limit).all()
+
+    def get_all_teachers(
+        self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: str
+    ) -> list[User]:
+        # Get those teachers from the database whose branch_id matches the branch_id passed as an argument.
+        teachers = (
+            db.query(User)
+            .filter(User.branch_id == branch_id, User.role == "teacher")
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
         return teachers
-    
-    def get_all_students(self, db: Session, *, skip: int = 0, limit: int = 100) -> list[Student]:
+
+    def get_all_students(
+        self, db: Session, *, skip: int = 0, limit: int = 100
+    ) -> list[Student]:
         students = db.query(Student).offset(skip).limit(limit).all()
         return students
 
-
     def create_student(self, db: Session, *, obj_in: UserCreateStudent) -> Student:
-        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+        unique_username = (
+            f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid4().hex[:5]}"
+        )
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),
@@ -109,26 +140,25 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
-        
+
         student = Student(user_id=db_obj.user_id, metric_id=obj_in.metric_id)
         db.add(student)
         db.commit()
         db.refresh(student)
-        
+
         user_settings = UserSettings(user_id=db_obj.user_id)
         db.add(user_settings)
         db.commit()
         db.refresh(user_settings)
-        
+
         db_obj.metric_id = obj_in.metric_id
-        
+
         return db_obj
-        
 
     def create_superuser(
         self, db: Session, *, obj_in: UserCreateBySuperUser, username: str
     ) -> User:
-        
+
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),
@@ -150,9 +180,11 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return db_obj
 
     def create_by_superuser(
-        self, db: Session, *, obj_in: UserCreateBySuperUser
+        self, db: Session, *, obj_in: UserCreateBySuperUser, branch_id: str
     ) -> User:
-        unique_username = f"{obj_in.first_name.lower()}.{obj_in.last_name.lower()}.{uuid.uuid4().hex[:8]}"
+        unique_username = (
+            f"{obj_in.first_name.lower()}_{obj_in.last_name.lower()}_{uuid4().hex[:5]}"
+        )
         db_obj = User(
             email=obj_in.email,
             password=get_password_hash(obj_in.password),
@@ -160,6 +192,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             last_name=obj_in.last_name,
             username=unique_username,
             role="admin",
+            branch_id=branch_id,
         )
         db.add(db_obj)
         db.commit()

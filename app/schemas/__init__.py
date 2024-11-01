@@ -1,6 +1,8 @@
+
 #app/schemas/__init__.py
 
-from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperUser
+from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperUser, Teacher
+
 from .token import Token, TokenPayload
 from .super_admin import (
     Department,
@@ -25,7 +27,6 @@ from .section import (
     SectionBase,
     SectionCreate,
     SectionUpdate,
-
 )
 
 from .library import (
@@ -53,12 +54,11 @@ from .discussion import (
 from .discussion_message import (
     DiscussionMessage,
     DiscussionMessageCreate,
-    DiscussionMessageBase
+    DiscussionMessageBase,
 )
 
 from .discussion_reply_message import (
     DiscussionReplyMessage,
     DiscussionReplyMessageCreate,
-    DiscussionReplyMessageBase
+    DiscussionReplyMessageBase,
 )
-
