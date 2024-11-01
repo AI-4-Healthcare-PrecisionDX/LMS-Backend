@@ -1,7 +1,7 @@
 """drop the section_exclusive_content table and then recreate it with different fields.
 
 Revision ID: 3dac1775b0cf
-Revises: a6326c69d7df
+Revises: c48f8267c5f9
 Create Date: 2024-11-01 13:01:52.476845
 
 """
@@ -13,7 +13,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = '3dac1775b0cf'
-down_revision: Union[str, None] = 'a6326c69d7df'
+down_revision: Union[str, None] = 'c48f8267c5f9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
