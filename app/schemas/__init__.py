@@ -1,7 +1,18 @@
+# app/schemas/__init__.py
 
-#app/schemas/__init__.py
-
-from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperUser, Teacher
+from .user import (
+    User,
+    UserCreate,
+    UserInDB,
+    UserUpdate,
+    UserCreateBySuperUser,
+    Teacher,
+    Admin,
+    Student,
+    UserCreateTeacher,
+    UserCreateAdmin,
+    UserCreateStudent,
+)
 
 from .token import Token, TokenPayload
 from .super_admin import (
