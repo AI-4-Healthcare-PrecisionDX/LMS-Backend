@@ -1,3 +1,5 @@
+#app/models/section_exclusive_content.py
+
 from sqlalchemy import  Column, ForeignKey, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 

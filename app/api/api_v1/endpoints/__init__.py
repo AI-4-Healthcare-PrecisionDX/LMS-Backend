@@ -8,4 +8,3 @@ from .section import router as section_router
 
 from .discussion_message import router as discussion_message_router
 from .assignment import router as assignment_router
-

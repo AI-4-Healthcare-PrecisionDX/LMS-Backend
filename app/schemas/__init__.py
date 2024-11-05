@@ -27,6 +27,8 @@ from .section import (
     SectionBase,
     SectionCreate,
     SectionUpdate,
+    SectionExclusiveContentBase,
+    SectionExclusiveContentCreate,
 )
 
 from .library import (
@@ -62,3 +64,4 @@ from .discussion_reply_message import (
     DiscussionReplyMessageCreate,
     DiscussionReplyMessageBase,
 )
+
