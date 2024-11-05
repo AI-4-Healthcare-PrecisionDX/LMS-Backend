@@ -20,7 +20,6 @@ api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_router.include_router(course.router, prefix="/course", tags=["course"])
 
 api_router.include_router(section.router, prefix="/section",tags=["section"])
-
 api_router.include_router(utils.router, prefix="/utils", tags=["utils"])
 api_router.include_router(assignment.router, prefix="/assignment", tags=["assignment"])
 

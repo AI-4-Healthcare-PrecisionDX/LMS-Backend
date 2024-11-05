@@ -4,13 +4,13 @@ from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
 from .course import TemplateCourse
+from .library import Library
 
-# Modify TeacherInfo to include user info
 class TeacherInfo(BaseModel):
     teacher_id: UUID
     user_id: UUID
-    user: Optional["UserBase"] = None  # Will contain user details including name
-    
+    user: Optional["UserBase"] = None
+
     class Config:
         from_attributes = True
 
@@ -22,7 +22,6 @@ class UserBase(BaseModel):
 
     @property
     def name(self) -> str:
-        """Return full name or email if name not available"""
         if self.first_name and self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.email
@@ -30,8 +29,22 @@ class UserBase(BaseModel):
     class Config:
         from_attributes = True
 
-# Update TeacherInfo to include UserBase
 TeacherInfo.model_rebuild()
+
+class SectionExclusiveContentBase(BaseModel):
+    section_id: UUID
+    library_item_id: UUID
+
+class SectionExclusiveContentCreate(SectionExclusiveContentBase):
+    pass
+
+class SectionExclusiveContentInDB(SectionExclusiveContentBase):
+    section_exclusive_content_id: UUID
+    user_id: UUID
+    library_item: Optional[Library] = None
+
+    class Config:
+        from_attributes = True
 
 class SectionBase(BaseModel):
     section_name: Optional[str] = None
@@ -53,7 +66,7 @@ class SectionUpdate(BaseModel):
 
 class SectionInDBBase(SectionBase):
     section_id: UUID
-    section_code: str  # Read-only, automatically generated
+    section_code: str
     teacher_id: UUID
     template_course_id: UUID
     created_at: datetime
@@ -61,12 +74,10 @@ class SectionInDBBase(SectionBase):
     teacher: Optional[TeacherInfo] = None
     template_course: Optional[TemplateCourse] = None
     student_count: Optional[int] = None
+    section_exclusive_contents: List[SectionExclusiveContentInDB] = []
 
     class Config:
         from_attributes = True
 
 class Section(SectionInDBBase):
-    pass
-
-class SectionInDB(SectionInDBBase):
     pass

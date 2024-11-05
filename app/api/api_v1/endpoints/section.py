@@ -6,7 +6,13 @@ from uuid import UUID
 
 from app import crud, models
 from app.api import deps
-from app.schemas.section import Section, SectionCreate, SectionUpdate
+from app.schemas.section import (
+    Section,
+    SectionCreate,
+    SectionUpdate,
+    SectionExclusiveContentCreate,
+    SectionExclusiveContentInDB
+)
 
 router = APIRouter()
 
@@ -140,7 +146,7 @@ def update_section(
             db=db,
             db_obj=section,
             obj_in=section_in,
-            teacher_id=current_user.user_id
+            user_id=current_user.user_id
         )
         return section
     except ValueError as e:
@@ -235,4 +241,165 @@ def delete_section(
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while deleting the section: {str(e)}"
+        )
+
+
+
+@router.get(
+    "/{section_id}/contents",
+    response_model=List[SectionExclusiveContentInDB]
+)
+def get_section_contents(
+    section_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Get all exclusive contents for a specific section.
+    Teachers can only access their own sections' content.
+    Admins can access any section's content.
+    """
+    # First check if section exists
+    section = crud.section.get_section_by_id(db=db, id=section_id)
+    if not section:
+        raise HTTPException(
+            status_code=404,
+            detail="Section not found"
+        )
+
+    # Check permissions
+    if current_user.role == "teacher":
+        if not crud.section.check_section_owner(
+            db=db,
+            section_id=section_id,
+            teacher_id=current_user.user_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to access this section's content"
+            )
+    elif current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to access section content"
+        )
+
+    try:
+        contents = crud.section.get_section_contents(
+            db=db,
+            section_id=section_id,
+            skip=skip,
+            limit=limit
+        )
+        return contents
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving section contents: {str(e)}"
+        )
+        
+        
+@router.post("/{section_id}/content", response_model=SectionExclusiveContentInDB)
+def add_section_content(
+    *,
+    db: Session = Depends(deps.get_db),
+    section_id: UUID,
+    library_item_id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Add exclusive content to a section.
+    Only teachers who own the section or admins can add content.
+    """
+    section = crud.section.get_section_by_id(db=db, id=section_id)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    # Check permissions
+    if current_user.role == "teacher":
+        if not crud.section.check_section_owner(
+            db=db,
+            section_id=section_id,
+            teacher_id=current_user.user_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to add content to this section"
+            )
+    elif current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to add section content"
+        )
+
+    # Check if library item exists
+    library_item = crud.library.get_by_uuid(db=db, library_id=library_item_id)
+    if not library_item:
+        raise HTTPException(status_code=404, detail="Library item not found")
+
+    try:
+        return crud.section.add_exclusive_content(
+            db=db,
+            section_id=section_id,
+            user_id=current_user.user_id,
+            library_item_id=library_item_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while adding content to section: {str(e)}"
+        )
+
+@router.delete("/{section_id}/content/{library_item_id}", response_model=dict)
+def remove_section_content(
+    *,
+    db: Session = Depends(deps.get_db),
+    section_id: UUID,
+    library_item_id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Remove exclusive content from a section.
+    Only teachers who own the section or admins can remove content.
+    """
+    section = crud.section.get_section_by_id(db=db, id=section_id)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    if current_user.role == "teacher":
+        if not crud.section.check_section_owner(
+            db=db,
+            section_id=section_id,
+            teacher_id=current_user.user_id
+        ):
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to remove content from this section"
+            )
+    elif current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to remove section content"
+        )
+
+    try:
+        success = crud.section.remove_exclusive_content(
+            db=db,
+            section_id=section_id,
+            library_item_id=library_item_id
+        )
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail="Content not found in this section"
+            )
+        return {"message": "Content removed from section successfully"}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while removing content from section: {str(e)}"
         )
