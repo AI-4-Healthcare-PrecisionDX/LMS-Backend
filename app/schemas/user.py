@@ -22,10 +22,14 @@ class UserCreate(UserBase):
 
 
 class UserCreateStudent(UserCreate):
-    metric_id: str
+    metric_id: Optional[str] = None
 
 
 class UserCreateTeacher(UserCreate):
+    pass
+
+
+class UserCreateAdmin(UserCreate):
     pass
 
 
@@ -72,6 +76,28 @@ class TeacherBase(BaseModel):
 
 class Teacher(UserInDBBase):
     teacher: Optional[TeacherBase] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AdminBase(BaseModel):
+    admin_id: Optional[UUID] = None
+
+
+class Admin(UserInDBBase):
+    admin: Optional[AdminBase] = None
+
+    class Config:
+        from_attributes = True
+
+
+class StudentBase(BaseModel):
+    student_id: Optional[UUID] = None
+
+
+class Student(UserInDBBase):
+    student: Optional[StudentBase] = None
 
     class Config:
         from_attributes = True
