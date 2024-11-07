@@ -109,10 +109,10 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
     ) -> Optional[Department]:
         return db.query(Department).filter(Department.email == email).first()
 
-    def create_department(self, db: Session, *, obj_in: DepartmentCreate) -> Department:
+    def create_department(self, db: Session, *, obj_in: DepartmentCreate,branch_id: UUID) -> Department:
         db_obj = Department(
             department_name=obj_in.department_name,
-            branch_id=obj_in.branch_id,
+            branch_id=branch_id,
         )
         db.add(db_obj)
         db.commit()

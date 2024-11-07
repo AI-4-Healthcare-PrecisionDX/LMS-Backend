@@ -53,19 +53,22 @@ def get_current_active_user(
 
 def get_current_active_admin_user(
     current_user: models.User = Depends(get_current_active_user),
-    branch_id: UUID = Path(...),
-) -> models.User:
+    db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)
+    # branch_id: UUID = Path(...),
+) -> models.Admin:
     if current_user.role != "admin":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
 
-    if current_user.branch_id != branch_id:
-        raise HTTPException(
-            status_code=403, detail="You do not have permission to perform this action"
-        )
+    # if current_user.branch_id != branch_id:
+    #     raise HTTPException(
+    #         status_code=403, detail="You do not have permission to perform this action"
+    #     )
+    
+    admin = crud.user.get_admin_by_user_id(db, user_id=current_user.user_id)
 
-    return current_user
+    return admin
 
 
 def get_current_active_superuser(
