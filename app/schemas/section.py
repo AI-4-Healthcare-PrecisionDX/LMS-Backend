@@ -36,9 +36,13 @@ class SectionExclusiveContentBase(BaseModel):
     library_item_id: UUID
 
 class SectionExclusiveContentCreate(SectionExclusiveContentBase):
+    title : Optional[str] = None
+    description: Optional[str] = None
     pass
 
 class SectionExclusiveContentInDB(SectionExclusiveContentBase):
+    title : Optional[str] = None
+    description: Optional[str] = None
     section_exclusive_content_id: UUID
     user_id: UUID
     library_item: Optional[Library] = None
@@ -57,12 +61,14 @@ class SectionCreate(BaseModel):
     start_date: datetime
     end_date: datetime
     template_course_id: UUID
+    teacher_id: UUID
 
 class SectionUpdate(BaseModel):
     section_name: Optional[str] = None
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     template_course_id: Optional[UUID] = None
+    teacher_id: Optional[UUID] = None
 
 class SectionInDBBase(SectionBase):
     section_id: UUID
