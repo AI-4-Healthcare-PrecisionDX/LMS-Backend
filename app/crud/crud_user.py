@@ -112,12 +112,11 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
 
         result = db.query(User).filter(User.user_id == db_obj.user_id).first()
         return result
-    
+
     def get_admin_by_user_id(
         self, db: Session, *, user_id: UUID
     ) -> Optional[Admin]:  # Changed parameter name from admin_id to id
         return db.query(Admin).filter(Admin.user_id == user_id).first()
-    
 
     def get_teacher_by_id(
         self, db: Session, *, id: UUID
@@ -139,6 +138,18 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     ) -> Optional[Student]:  # Keep consistent naming
 
         return db.query(Student).filter(Student.student_id == id).first()
+
+    def get_all_admins(
+        self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: UUID
+    ) -> list[User]:
+        admins = (
+            db.query(User)
+            .filter(User.branch_id == branch_id, User.role == "admin")
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        return admins
 
     def get_all_teachers(
         self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: UUID

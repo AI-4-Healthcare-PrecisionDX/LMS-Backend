@@ -76,7 +76,6 @@ class TeacherBase(BaseModel):
 
 class Teacher(UserInDBBase):
     teacher: Optional[TeacherBase] = None
-    user : UserInDBBase
 
     class Config:
         from_attributes = True

@@ -20,12 +20,12 @@ router = APIRouter()
 
 
 # Create admin user
-@router.post("/create-admin/{branch_id}", response_model=schemas.Admin)
+@router.post("/create-admin", response_model=schemas.Admin)
 def create_admin(
     *,
     db: Session = Depends(deps.get_db),
     user_in: schemas.UserCreateAdmin,
-    branch_id: UUID = Depends(deps.check_branch),
+    # branch_id: UUID = Depends(deps.check_branch),
     current_user: models.user.User = Depends(deps.get_current_active_admin_user),
 ) -> schemas.Admin:
     """
@@ -47,7 +47,9 @@ def create_admin(
         )
 
     try:
-        user = crud.user.create_admin_by_admin(db, obj_in=user_in, branch_id=branch_id)
+        user = crud.user.create_admin_by_admin(
+            db, obj_in=user_in, branch_id=current_user.branch_id
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -56,13 +58,66 @@ def create_admin(
     return user
 
 
+@router.get("/admins", response_model=List[schemas.Admin])
+def get_admins(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    # branch_id: UUID = Depends(deps.check_branch),
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> Any:
+    """
+    Retrieve all admins of a particular branch.
+    """
+    try:
+        admins = crud.user.get_all_admins(
+            db, skip=skip, limit=limit, branch_id=current_user.branch_id
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the admins",
+        )
+    return admins
+
+
+@router.put("/update-admin", response_model=schemas.Admin)
+def update_admin(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_in: schemas.UserUpdate,
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> schemas.Admin:
+    """
+    Update an admin.
+    """
+    try:
+        user = crud.user.get_by_email(db, email=user_in.email)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the user",
+        )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        user = crud.user.update(db, db_obj=user, obj_in=user_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while updating the user",
+        )
+    return user
+
+
 # Create teacher user
-@router.post("/create-teacher/{branch_id}", response_model=schemas.Teacher)
+@router.post("/create-teacher", response_model=schemas.Teacher)
 def create_teacher(
     *,
     db: Session = Depends(deps.get_db),
     user_in: schemas.UserCreateTeacher,
-    branch_id: UUID = Depends(deps.check_branch),
     current_user: models.user.User = Depends(deps.get_current_active_admin_user),
 ) -> schemas.Teacher:
     """
@@ -82,10 +137,9 @@ def create_teacher(
             status_code=400,
             detail="The user with this email already exists in the system",
         )
-
     try:
         user = crud.user.create_teacher_by_admin(
-            db, obj_in=user_in, branch_id=branch_id
+            db, obj_in=user_in, branch_id=current_user.branch_id
         )
     except Exception as e:
         raise HTTPException(
@@ -95,12 +149,11 @@ def create_teacher(
     return user
 
 
-@router.get("/teachers/{branch_id}", response_model=List[schemas.Teacher])
+@router.get("/teachers", response_model=List[schemas.Teacher])
 def get_teachers(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    branch_id: UUID = Depends(deps.check_branch),
     current_user: models.user.User = Depends(deps.get_current_active_admin_user),
 ) -> Any:
     """
@@ -108,7 +161,7 @@ def get_teachers(
     """
     try:
         teachers = crud.user.get_all_teachers(
-            db, skip=skip, limit=limit, branch_id=branch_id
+            db, skip=skip, limit=limit, branch_id=current_user.branch_id
         )
     except Exception as e:
         raise HTTPException(
@@ -143,12 +196,43 @@ def get_teacher_by_id(
     return teacher
 
 
-@router.post("/create-student/{branch_id}", response_model=schemas.Student)
+@router.put("/update-teacher", response_model=schemas.Teacher)
+def update_teacher(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_in: schemas.UserUpdate,
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> schemas.Teacher:
+    """
+    Update a teacher.
+    """
+    try:
+        user = crud.user.get_by_email(db, email=user_in.email)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the user",
+        )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        user = crud.user.update(db, db_obj=user, obj_in=user_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while updating the user",
+        )
+    return user
+
+
+@router.post("/create-student", response_model=schemas.Student)
 def create_student(
     *,
     db: Session = Depends(deps.get_db),
     user_in: schemas.UserCreateStudent,
-    branch_id: UUID = Depends(deps.check_branch),
+    # branch_id: UUID = Depends(deps.check_branch),
     current_user: models.user.User = Depends(deps.get_current_active_admin_user),
 ) -> schemas.Student:
     """
@@ -171,7 +255,7 @@ def create_student(
 
     try:
         user = crud.user.create_student_by_admin(
-            db, obj_in=user_in, branch_id=branch_id
+            db, obj_in=user_in, branch_id=current_user.branch_id
         )
     except Exception as e:
         raise HTTPException(
@@ -181,12 +265,12 @@ def create_student(
     return user
 
 
-@router.get("/students/{branch_id}", response_model=List[schemas.Student])
+@router.get("/students", response_model=List[schemas.Student])
 def get_students(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    branch_id: UUID = Depends(deps.check_branch),
+    # branch_id: UUID = Depends(deps.check_branch),
     current_user: models.user.User = Depends(deps.get_current_active_admin_user),
 ) -> Any:
     """
@@ -194,7 +278,7 @@ def get_students(
     """
     try:
         students = crud.user.get_all_students(
-            db, skip=skip, limit=limit, branch_id=branch_id
+            db, skip=skip, limit=limit, branch_id=current_user.branch_id
         )
     except Exception as e:
         raise HTTPException(
@@ -226,3 +310,34 @@ def get_student_by_id(
     if not student:
         raise HTTPException(status_code=404, detail="Student not found")
     return student
+
+
+@router.put("/update-student", response_model=schemas.Student)
+def update_student(
+    *,
+    db: Session = Depends(deps.get_db),
+    user_in: schemas.UserUpdate,
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> schemas.Student:
+    """
+    Update a student.
+    """
+    try:
+        user = crud.user.get_by_email(db, email=user_in.email)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the user",
+        )
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        user = crud.user.update(db, db_obj=user, obj_in=user_in)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while updating the user",
+        )
+    return user
