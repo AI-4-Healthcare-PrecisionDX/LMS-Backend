@@ -21,6 +21,10 @@ class SectionExclusiveContent(Base):
         index=True,
     )
     
+    title = Column(String, nullable=True)
+    
+    description = Column(String, nullable=True)
+    
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
     user = relationship("User", back_populates="section_exclusive_contents")
     
