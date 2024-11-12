@@ -253,21 +253,24 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
         db.commit()
         return True
     
-    def get_sections_of_a_course_by_course_teacher(
-        self, db: Session, *, template_course_id: UUID, user_id: UUID
+    def get_sections_by_course_teacher(
+        self, 
+        db: Session, 
+        *, 
+        course_id: UUID, 
+        teacher_id: UUID
     ) -> List[SectionModel]:
-        """Get all sections of a course by course ID and teacher ID"""
-        
-        try:
-            teacher = user.get_teacher_by_user_id(db=db, id=user_id)
-        except Exception as e:
-            raise ValueError(f"Error fetching teacher: {e}")
-        
+        """Get all sections for a course and teacher"""
         return (
             db.query(SectionModel)
             .filter(
-                SectionModel.template_course_id == template_course_id,
-                SectionModel.teacher_id == teacher.teacher_id
+                SectionModel.template_course_id == course_id,
+                SectionModel.teacher_id == teacher_id
+            )
+            .options(
+                joinedload(SectionModel.teacher).joinedload(Teacher.user),
+                joinedload(SectionModel.template_course),
+                joinedload(SectionModel.section_exclusive_contents).joinedload(SectionExclusiveContent.library_item)
             )
             .all()
         )

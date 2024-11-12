@@ -305,7 +305,7 @@ def read_departments(
     Retrieve departments.
     """
     
-    if current_user.role != "admin":
+    if current_user.role != "admin" or current_user.role != "superuser":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
@@ -325,13 +325,13 @@ def read_departments(
 def read_department_by_id(
     department_id: str,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_superuser),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get a specific department by ID.
     """
     
-    if current_user.role != "admin":
+    if current_user.role != "admin" or current_user.role != "superuser":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
@@ -361,7 +361,7 @@ def update_department(
     Update a department.
     """
     
-    if current_user.role != "admin":
+    if current_user.role != "admin" or current_user.role != "superuser":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )

@@ -40,6 +40,8 @@ from .section import (
     SectionUpdate,
     SectionExclusiveContentBase,
     SectionExclusiveContentCreate,
+    SectionExclusiveContentByCourseTeacher,
+    SectionExclusiveContentByCourseTeacherCreate,
 )
 
 from .library import (
