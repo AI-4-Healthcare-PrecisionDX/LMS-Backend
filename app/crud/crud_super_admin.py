@@ -118,6 +118,9 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
         db.commit()
         db.refresh(db_obj)
         return db_obj
+    
+    def get_multi(self, db, *, skip = 0, limit = 100):
+        return super().get_multi(db, skip=skip, limit=limit)
 
     def update_department(
         self,
