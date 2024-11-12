@@ -49,6 +49,25 @@ class SectionExclusiveContentInDB(SectionExclusiveContentBase):
 
     class Config:
         from_attributes = True
+        
+class SectionExclusiveContentByCourseTeacher(BaseModel):
+    course_id: UUID
+    library_item_id: UUID
+    
+class SectionExclusiveContentByCourseTeacherCreate(SectionExclusiveContentByCourseTeacher):
+    title : Optional[str] = None
+    description: Optional[str] = None
+    pass
+
+class SectionExclusiveContentByCourseTeacherInDB(SectionExclusiveContentByCourseTeacher):
+    title : Optional[str] = None
+    description: Optional[str] = None
+    section_exclusive_content_id: UUID
+    user_id: UUID
+    library_item: Optional[Library] = None
+
+    class Config:
+        from_attributes = True
 
 class SectionBase(BaseModel):
     section_name: Optional[str] = None
