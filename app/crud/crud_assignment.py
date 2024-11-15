@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional, List
 from sqlalchemy.orm import Session, joinedload
 from uuid import UUID
 from datetime import datetime
-
+from app.models.assignment_material import AssignmentMaterial
 from app.crud.base import CRUDBase
 from app.models.assignment import Assignment
 from app.models.assignment_question import AssignmentQuestion
@@ -35,27 +35,59 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
             .all()
         )
 
-    def create(self, db: Session, *, obj_in: AssignmentCreate) -> Assignment:
+    def create_assignment(self, db: Session, *, obj_in: AssignmentCreate) -> Assignment:
         try:
+            # Create list to store assignment materials
+            assignment_materials_list = []
+            if obj_in.assignment_materials:
+                for material_id in obj_in.assignment_materials:
+                    material_obj = AssignmentMaterial(
+                        library_item_id=material_id,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    assignment_materials_list.append(material_obj)
+
+            # Create list to store questions
+            questions_list = []
+            if obj_in.questions:
+                for question in obj_in.questions:
+                    question_obj = AssignmentQuestion(
+                        question_type=question.question_type,
+                        question_text=question.question_text,
+                        expected_answer=question.expected_answer,
+                        options_for_mcq=question.options_for_mcq,
+                        marks=question.marks,
+                        question_description=question.question_description,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    questions_list.append(question_obj)
+
+            # Create the assignment with relationships
             db_obj = Assignment(
-            assignment_type=obj_in.assignment_type,
-            assignment_title=obj_in.assignment_title,
-            assignment_description=obj_in.assignment_description,
-            assignment_question_type=obj_in.assignment_question_type,
-            number_of_questions=obj_in.number_of_questions,
-            total_marks=obj_in.total_marks,
-            start_time=obj_in.start_time,
-            deadline=obj_in.deadline,
-            section_id=obj_in.section_id,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow()
+                assignment_type=obj_in.assignment_type,
+                assignment_title=obj_in.assignment_title,
+                assignment_description=obj_in.assignment_description,
+                number_of_questions=obj_in.number_of_questions,
+                total_marks=obj_in.total_marks,
+                start_time=obj_in.start_time,
+                deadline=obj_in.deadline,
+                section_id=obj_in.section_id,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+                assignment_materials=assignment_materials_list,
+                assignment_questions=questions_list
             )
+
             db.add(db_obj)
             db.commit()
             db.refresh(db_obj)
+            
             return db_obj
         except Exception as e:
-            raise ValueError(f"An error occurred while creating assignment: {str(e)}")
+            db.rollback()
+            raise e
         
 
     def update(
