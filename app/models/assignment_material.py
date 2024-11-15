@@ -17,9 +17,16 @@ class AssignmentMaterial(Base):
         index=True,
     )
     
-    matrial = Column(String, nullable=False)
+    title = Column(String, nullable=True)
+    
+    description = Column(String, nullable=True)
+    
+    
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    library_item_id = Column(UUID(as_uuid=True), ForeignKey("global_library.library_id"))
+    library_item = relationship("GlobalLibrary", back_populates="assignment_material")
     
     assignment_id = Column(UUID(as_uuid=True), ForeignKey("assignment.assignment_id"))
     assignment = relationship("Assignment", back_populates="assignment_materials")
