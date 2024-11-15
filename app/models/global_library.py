@@ -37,3 +37,5 @@ class GlobalLibrary(Base):
     course_materials = relationship("CourseMaterials", back_populates="library_item")
     
     section_exclusive_content = relationship("SectionExclusiveContent", back_populates="library_item")
+    
+    assignment_material = relationship("AssignmentMaterial", back_populates="library_item")
