@@ -38,7 +38,6 @@ class AssignmentBase(BaseModel):
     assignment_type: str  # traditional / ai generated
     assignment_title: str
     assignment_description: Optional[str] = None
-    assignment_question_type: str
     number_of_questions: int
     total_marks: str
     start_time: Optional[datetime] = None
@@ -46,12 +45,13 @@ class AssignmentBase(BaseModel):
 
 class AssignmentCreate(AssignmentBase):
     section_id: UUID
+    assignment_materials : Optional[List[UUID]] = None
+    questions : Optional[List[AssignmentQuestionCreate]] = None
 
 class AssignmentUpdate(BaseModel):
     assignment_type: Optional[str] = None
     assignment_title: Optional[str] = None
     assignment_description: Optional[str] = None
-    assignment_question_type: Optional[str] = None
     number_of_questions: Optional[int] = None
     total_marks: Optional[str] = None
     start_time: Optional[datetime] = None
@@ -70,5 +70,25 @@ class AssignmentInDBBase(AssignmentBase):
 class AssignmentQuestion(AssignmentQuestionInDBBase):
     pass
 
+
+# Add AssignmentMaterial schema
+class AssignmentMaterialBase(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    library_item_id: UUID
+
+class AssignmentMaterial(AssignmentMaterialBase):
+    assignment_material_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
 class Assignment(AssignmentInDBBase):
-    questions: List[AssignmentQuestion] = []
+    assignment_questions: List[AssignmentQuestion] = []  # Changed from questions to assignment_questions
+    assignment_materials: List[AssignmentMaterial] = []  # Changed to include full AssignmentMaterial objects
+
+    class Config:
+        from_attributes = True
+        
+        

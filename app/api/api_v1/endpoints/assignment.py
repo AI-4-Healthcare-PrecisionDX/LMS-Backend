@@ -14,31 +14,27 @@ def create_assignment(
     *,
     db: Session = Depends(deps.get_db),
     assignment_in: schemas.AssignmentCreate,
-    current_user: models.User = Depends(deps.get_current_active_user)
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user)
 ) -> Any:
-    """
-    Create new assignment.
-    """
-    if current_user.role != "teacher":
-        raise HTTPException(
-            status_code=403,
-            detail="Only teachers can create assignments"
-        )
+    
 
     # Verify section exists and teacher has access
     section = crud.section.get_section_by_id(db=db, id=assignment_in.section_id)
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
 
-    teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
-    if not teacher or section.teacher_id != teacher.teacher_id:
+    if not crud.section.check_section_owner(
+        db=db,
+        section_id=section.section_id,
+        teacher_id=current_teacher.teacher_id
+    ):
         raise HTTPException(
             status_code=403,
-            detail="You don't have permission to create assignments in this section"
+            detail="You don't have permission to remove content from this section"
         )
 
     try:
-        return crud.assignment.create(db=db, obj_in=assignment_in)
+        return crud.assignment.create_assignment(db=db, obj_in=assignment_in)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
