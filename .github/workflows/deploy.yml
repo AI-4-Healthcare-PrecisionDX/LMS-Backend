@@ -35,8 +35,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no root@203.161.38.194 << 'EOF'
             cd /home/fastapi/lms-backend
-            sudo docker-compose down
-            sudo docker-compose up --build -d
+            sudo docker compose down
+            sudo docker compose up --build -d
+            sudo docker image prune -f
             # General error log check (you can customize or expand these patterns)
             ERROR_LOG=$(sudo docker-compose logs web | grep -E -i 'error|exception|traceback|undefinedtable|fail|fatal')
             if [[ -n "$ERROR_LOG" ]]; then

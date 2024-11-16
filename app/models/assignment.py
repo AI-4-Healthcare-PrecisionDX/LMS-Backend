@@ -17,9 +17,8 @@ class Assignment(Base):
     assignment_type = Column(String, nullable=False) # traditional / ai generated
     assignment_title = Column(String, nullable=False)
     assignment_description = Column(String, nullable=True)
-    assignment_question_type = Column(String, nullable=False)
-    number_of_questions = Column(Integer, nullable=False)
-    total_marks = Column(String, nullable=False)
+    number_of_questions = Column(Integer, nullable=False, default=0)
+    total_marks = Column(Integer, nullable=False, default=0)
     start_time = Column(DateTime, nullable=True)
     deadline = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)

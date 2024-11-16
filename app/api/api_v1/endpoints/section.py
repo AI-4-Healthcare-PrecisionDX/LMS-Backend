@@ -37,17 +37,12 @@ def get_teacher_sections(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user),
 ) -> Any:
     """Get all sections for the current teacher"""
-    if current_user.role != "teacher":
-        raise HTTPException(
-            status_code=403,
-            detail="Only teachers can access their sections"
-        )
-    
+
     sections = crud.section.get_sections_by_teacher(
-        db=db, user_id=current_user.id, skip=skip, limit=limit
+        db=db, teacher_id=current_teacher.teacher_id, skip=skip, limit=limit
     )
     return sections
 
@@ -126,7 +121,7 @@ def update_section(
     if current_user.role != "admin":
         raise HTTPException(
             status_code=403,
-            detail="Only teachers can update sections"
+            detail="Only admins can update sections"
         )
 
     try:
@@ -174,23 +169,29 @@ def get_section(
             status_code=404,
             detail="Section not found"
         )
+    
+    if current_user.role == "admin":
+        return section
+        
+    teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
 
-    if current_user.role == "teacher":
+    if current_user.role == "teacher" or current_user.role == "admin":
         # Check if the teacher owns the section
         if not crud.section.check_section_owner(
             db=db,
             section_id=section_id,
-            teacher_id=current_user.id
+            teacher_id=teacher.teacher_id
         ):
             raise HTTPException(
                 status_code=403,
                 detail="You don't have permission to access this section"
             )
-    elif current_user.role != "admin":
+    else:
         raise HTTPException(
             status_code=403,
-            detail="Not authorized to access section details"
+            detail="Not authorized to access this section"
         )
+        
 
     return section
 
@@ -231,7 +232,7 @@ def delete_section(
 def get_section_contents(
     section_id: UUID,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user),
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
@@ -245,20 +246,14 @@ def get_section_contents(
         )
 
     # Check permissions
-    if current_user.role == "teacher":
-        if not crud.section.check_section_owner(
-            db=db,
-            section_id=section_id,
-            teacher_id=current_user.id
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="You don't have permission to access this section's content"
-            )
-    elif current_user.role != "admin":
+    if not crud.section.check_section_owner(
+        db=db,
+        section_id=section_id,
+        teacher_id=current_teacher.teacher_id
+    ):
         raise HTTPException(
             status_code=403,
-            detail="Not authorized to access section content"
+            detail="You don't have permission to access this section"
         )
 
     try:
@@ -280,7 +275,7 @@ def add_section_content(
     *,
     db: Session = Depends(deps.get_db),
     content: SectionExclusiveContentCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user),
 ) -> Any:
     """
     Add exclusive content to a section.
@@ -290,21 +285,14 @@ def add_section_content(
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
 
-    # Check permissions
-    if current_user.role == "teacher":
-        if not crud.section.check_section_owner(
-            db=db,
-            section_id=content.section_id,
-            teacher_id=current_user.id
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="You don't have permission to add content to this section"
-            )
-    elif current_user.role != "admin":
+    if not crud.section.check_section_owner(
+        db=db,
+        section_id=content.section_id,
+        teacher_id=current_teacher.teacher_id
+    ):
         raise HTTPException(
             status_code=403,
-            detail="Not authorized to add section content"
+            detail="You don't have permission to add content to this section"
         )
 
     # Check if library item exists
@@ -315,7 +303,7 @@ def add_section_content(
     try:
         return crud.section.add_exclusive_content(
             db=db,
-            user_id=current_user.user_id,
+            user_id=current_teacher.user_id,
             content_in=content
         )
     except ValueError as e:
@@ -326,13 +314,13 @@ def add_section_content(
             detail=f"An error occurred while adding content to section: {str(e)}"
         )
 
-@router.delete("/{section_id}/content/{library_item_id}", response_model=dict)
+@router.delete("/{section_id}/content/{section_exclusive_content_id}", response_model=dict)
 def remove_section_content(
     *,
     db: Session = Depends(deps.get_db),
     section_id: UUID,
-    library_item_id: UUID,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    section_exclusive_content_id: UUID,
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user),
 ) -> Any:
     """
     Remove exclusive content from a section.
@@ -342,27 +330,22 @@ def remove_section_content(
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
 
-    if current_user.role == "teacher":
-        if not crud.section.check_section_owner(
-            db=db,
-            section_id=section_id,
-            teacher_id=current_user.id
-        ):
-            raise HTTPException(
-                status_code=403,
-                detail="You don't have permission to remove content from this section"
-            )
-    elif current_user.role != "admin":
+    if not crud.section.check_section_owner(
+        db=db,
+        section_id=section_id,
+        teacher_id=current_teacher.teacher_id
+    ):
         raise HTTPException(
             status_code=403,
-            detail="Not authorized to remove section content"
+            detail="You don't have permission to remove content from this section"
         )
+        
 
     try:
         success = crud.section.remove_exclusive_content(
             db=db,
             section_id=section_id,
-            library_item_id=library_item_id
+            section_exclusive_content_id=section_exclusive_content_id
         )
         if not success:
             raise HTTPException(

@@ -40,6 +40,8 @@ from .section import (
     SectionUpdate,
     SectionExclusiveContentBase,
     SectionExclusiveContentCreate,
+    SectionExclusiveContentByCourseTeacher,
+    SectionExclusiveContentByCourseTeacherCreate,
 )
 
 from .library import (
@@ -50,13 +52,19 @@ from .library import (
 )
 
 
+
 from .assignment import (
-    Assignment,
+    AssignmentBase,
     AssignmentCreate,
     AssignmentUpdate,
-    AssignmentQuestion,
+    Assignment,
+    AssignmentQuestionBase,
     AssignmentQuestionCreate,
     AssignmentQuestionUpdate,
+    AssignmentQuestionInDB,
+    AssignmentMaterialBase,
+    AssignmentMaterialInDB,
+    DeleteAssignmentResponse
 )
 
 from .discussion import (

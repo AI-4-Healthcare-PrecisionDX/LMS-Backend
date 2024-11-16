@@ -94,16 +94,13 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
         )
 
     def get_sections_by_teacher(
-        self, db: Session, *, user_id: UUID, skip: int = 0, limit: int = 100
+        self, db: Session, *, teacher_id: UUID, skip: int = 0, limit: int = 100
     ) -> List[SectionModel]:
         """Get all sections for a teacher with all related data"""
-        teacher = user.get_teacher_by_user_id(db=db, id=user_id)
-        if not teacher:
-            return []
-            
+        
         return (
             db.query(SectionModel)
-            .filter(SectionModel.teacher_id == teacher.teacher_id)
+            .filter(SectionModel.teacher_id ==teacher_id)
             .options(
                 joinedload(SectionModel.teacher).joinedload(Teacher.user),
                 joinedload(SectionModel.template_course),
@@ -237,13 +234,13 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
         db: Session,
         *,
         section_id: UUID,
-        library_item_id: UUID
+        section_exclusive_content_id: UUID
     ) -> bool:
         content = (
             db.query(SectionExclusiveContent)
             .filter(
                 SectionExclusiveContent.section_id == section_id,
-                SectionExclusiveContent.library_item_id == library_item_id
+                SectionExclusiveContent.section_exclusive_content_id == section_exclusive_content_id
             )
             .first()
         )
@@ -253,21 +250,24 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
         db.commit()
         return True
     
-    def get_sections_of_a_course_by_course_teacher(
-        self, db: Session, *, template_course_id: UUID, user_id: UUID
+    def get_sections_by_course_teacher(
+        self, 
+        db: Session, 
+        *, 
+        course_id: UUID, 
+        teacher_id: UUID
     ) -> List[SectionModel]:
-        """Get all sections of a course by course ID and teacher ID"""
-        
-        try:
-            teacher = user.get_teacher_by_user_id(db=db, id=user_id)
-        except Exception as e:
-            raise ValueError(f"Error fetching teacher: {e}")
-        
+        """Get all sections for a course and teacher"""
         return (
             db.query(SectionModel)
             .filter(
-                SectionModel.template_course_id == template_course_id,
-                SectionModel.teacher_id == teacher.teacher_id
+                SectionModel.template_course_id == course_id,
+                SectionModel.teacher_id == teacher_id
+            )
+            .options(
+                joinedload(SectionModel.teacher).joinedload(Teacher.user),
+                joinedload(SectionModel.template_course),
+                joinedload(SectionModel.section_exclusive_contents).joinedload(SectionExclusiveContent.library_item)
             )
             .all()
         )

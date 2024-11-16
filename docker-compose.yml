@@ -1,6 +1,7 @@
 services:
   web:
-    build: .
+    build:
+      context: .
     image: lms-backend:latest
     depends_on:
       - db
