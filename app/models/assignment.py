@@ -18,7 +18,7 @@ class Assignment(Base):
     assignment_title = Column(String, nullable=False)
     assignment_description = Column(String, nullable=True)
     number_of_questions = Column(Integer, nullable=False, default=0)
-    total_marks = Column(String, nullable=False, default=0)
+    total_marks = Column(Integer, nullable=False, default=0)
     start_time = Column(DateTime, nullable=True)
     deadline = Column(DateTime, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
