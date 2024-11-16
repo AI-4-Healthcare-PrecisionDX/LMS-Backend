@@ -1,4 +1,3 @@
-# app/api/api_v1/endpoints/section.py
 from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
