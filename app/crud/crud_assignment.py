@@ -37,34 +37,7 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
 
     def create_assignment(self, db: Session, *, obj_in: AssignmentCreate) -> Assignment:
         try:
-            # Create list to store assignment materials
-            assignment_materials_list = []
-            if obj_in.assignment_materials:
-                for material_id in obj_in.assignment_materials:
-                    material_obj = AssignmentMaterial(
-                        library_item_id=material_id,
-                        created_at=datetime.utcnow(),
-                        updated_at=datetime.utcnow()
-                    )
-                    assignment_materials_list.append(material_obj)
-
-            # Create list to store questions
-            questions_list = []
-            if obj_in.questions:
-                for question in obj_in.questions:
-                    question_obj = AssignmentQuestion(
-                        question_type=question.question_type,
-                        question_text=question.question_text,
-                        expected_answer=question.expected_answer,
-                        options_for_mcq=question.options_for_mcq,
-                        marks=question.marks,
-                        question_description=question.question_description,
-                        created_at=datetime.utcnow(),
-                        updated_at=datetime.utcnow()
-                    )
-                    questions_list.append(question_obj)
-
-            # Create the assignment with relationships
+            # Validate and create assignment without relationships first
             db_obj = Assignment(
                 assignment_type=obj_in.assignment_type,
                 assignment_title=obj_in.assignment_title,
@@ -76,15 +49,41 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
                 section_id=obj_in.section_id,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
-                assignment_materials=assignment_materials_list,
-                assignment_questions=questions_list
             )
-
             db.add(db_obj)
+            db.flush()  # This gets us the assignment_id without committing
+
+            # Create assignment materials if provided
+            if obj_in.assignment_materials:
+                for material_id in obj_in.assignment_materials:
+                    material_obj = AssignmentMaterial(
+                        library_item_id=material_id,
+                        assignment_id=db_obj.assignment_id,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(material_obj)
+
+            # Create questions if provided
+            if obj_in.questions:
+                for question in obj_in.questions:
+                    question_obj = AssignmentQuestion(
+                        question_type=question.question_type,
+                        question_text=question.question_text,
+                        expected_answer=question.expected_answer,
+                        options_for_mcq=question.options_for_mcq,
+                        marks=question.marks,
+                        question_description=question.question_description,
+                        assignment_id=db_obj.assignment_id,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(question_obj)
+
             db.commit()
             db.refresh(db_obj)
-            
             return db_obj
+            
         except Exception as e:
             db.rollback()
             raise e
@@ -93,25 +92,116 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
     def update(
         self, db: Session, *, db_obj: Assignment, obj_in: AssignmentUpdate | Dict[str, Any]
     ) -> Assignment:
-        if isinstance(obj_in, dict):
-            update_data = obj_in
-        else:
-            update_data = obj_in.model_dump(exclude_unset=True)
+        try:
+            if isinstance(obj_in, dict):
+                update_data = obj_in
+            else:
+                update_data = obj_in.model_dump(exclude_unset=True)
 
-        update_data["updated_at"] = datetime.utcnow()
-        return super().update(db, db_obj=db_obj, obj_in=update_data)
+            # Handle assignment materials if provided
+            if "assignment_materials" in update_data:
+                # Delete existing materials using a separate query
+                db.query(AssignmentMaterial).filter(
+                    AssignmentMaterial.assignment_id == db_obj.assignment_id
+                ).delete(synchronize_session=False)
+                
+                # Add new materials
+                for material_id in update_data["assignment_materials"]:
+                    material_obj = AssignmentMaterial(
+                        library_item_id=material_id,
+                        assignment_id=db_obj.assignment_id,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(material_obj)
+                
+                del update_data["assignment_materials"]
 
-    def delete(self, db: Session, *, id: UUID) -> None:
-        # First delete all associated questions
-        db.query(AssignmentQuestion).filter(
-            AssignmentQuestion.assignment_id == id
-        ).delete()
-        
-        # Then delete the assignment
-        assignment = db.query(Assignment).filter(Assignment.assignment_id == id).first()
-        if assignment:
-            db.delete(assignment)
+            # Handle questions if provided
+            if "questions" in update_data:
+                # Delete existing questions using a separate query
+                db.query(AssignmentQuestion).filter(
+                    AssignmentQuestion.assignment_id == db_obj.assignment_id
+                ).delete(synchronize_session=False)
+                
+                db.flush()  # Ensure the deletes are processed
+                
+                # Add new questions
+                for question_data in update_data["questions"]:
+                    # Convert dict to AssignmentQuestionCreate if necessary
+                    if isinstance(question_data, dict):
+                        question_data = AssignmentQuestionCreate(**question_data)
+                        
+                    question_obj = AssignmentQuestion(
+                        question_type=question_data.question_type,
+                        question_text=question_data.question_text,
+                        expected_answer=question_data.expected_answer,
+                        options_for_mcq=question_data.options_for_mcq,
+                        marks=question_data.marks,
+                        question_description=question_data.question_description,
+                        assignment_id=db_obj.assignment_id,
+                        created_at=datetime.utcnow(),
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(question_obj)
+                
+                del update_data["questions"]
+
+            # Update the main assignment fields
+            for field, value in update_data.items():
+                setattr(db_obj, field, value)
+            
+            db_obj.updated_at = datetime.utcnow()
+            db.add(db_obj)
+            
             db.commit()
+            db.refresh(db_obj)
+            
+            return db_obj
+            
+        except Exception as e:
+            db.rollback()
+            raise e
+
+
+    def delete_assignment(self, db: Session, *, assignment_id: UUID) -> None:
+        try:
+            # Begin transaction
+            db.begin_nested()
+            
+            # Get the assignment first to verify it exists
+            assignment = db.query(Assignment).filter(
+                Assignment.assignment_id == assignment_id
+            ).first()
+            
+            if not assignment:
+                raise ValueError("Assignment not found")
+            
+            # 1. First delete materials
+            db.query(AssignmentMaterial).filter(
+                AssignmentMaterial.assignment_id == assignment_id
+            ).delete(synchronize_session='fetch')
+            db.flush()
+            
+            # 2. Then delete questions
+            db.query(AssignmentQuestion).filter(
+                AssignmentQuestion.assignment_id == assignment_id
+            ).delete(synchronize_session='fetch')
+            db.flush()
+            
+            # 3. Finally delete the assignment
+            db.delete(assignment)
+            
+            # Commit all changes
+            db.commit()
+            
+        except ValueError as e:
+            db.rollback()
+            raise e
+        except Exception as e:
+            db.rollback()
+            raise ValueError(f"Error while deleting assignment and related items: {str(e)}")
+
 
 class CRUDAssignmentQuestion(CRUDBase[AssignmentQuestion, AssignmentQuestionCreate, AssignmentQuestionUpdate]):
     def get_by_id(self, db: Session, *, id: UUID) -> Optional[AssignmentQuestion]:
