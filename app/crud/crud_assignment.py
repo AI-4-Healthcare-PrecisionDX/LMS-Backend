@@ -176,7 +176,7 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
             
             if not assignment:
                 raise ValueError("Assignment not found")
-            
+
             # 1. First delete materials
             db.query(AssignmentMaterial).filter(
                 AssignmentMaterial.assignment_id == assignment_id

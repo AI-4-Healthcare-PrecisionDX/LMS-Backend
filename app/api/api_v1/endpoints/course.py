@@ -14,7 +14,7 @@ from app.schemas.course import (
 
 router = APIRouter()
 
-@router.get("/", response_model=List[TemplateCourse])
+@router.get("", response_model=List[TemplateCourse])
 def get_courses(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
@@ -84,7 +84,7 @@ def get_course(
         
     return course
 
-@router.post("/", response_model=TemplateCourse)
+@router.post("", response_model=TemplateCourse)
 def create_course(
     *,
     db: Session = Depends(deps.get_db),
@@ -118,12 +118,12 @@ def create_course(
         )
         
         # Add teacher access if provided
-        if course_in.template_course_access:
-            crud.template_course.add_course_access(
-                db=db,
-                template_course_id=course.template_course_id,
-                teacher_ids=course_in.template_course_access
-            )
+        # if course_in.template_course_access:
+        #     crud.template_course.add_course_access(
+        #         db=db,
+        #         template_course_id=course.template_course_id,
+        #         teacher_ids=course_in.template_course_access
+        #     )
         
         # Add course materials if provided
         if course_in.course_materials:

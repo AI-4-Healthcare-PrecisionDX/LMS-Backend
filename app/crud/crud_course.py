@@ -46,17 +46,17 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         db.refresh(db_obj)
         return db_obj
 
-    def add_course_access(
-        self, db: Session, *, template_course_id: UUID, teacher_ids: List[UUID]
-    ) -> None:
-        """Add teacher access to the course"""
-        for teacher_id in teacher_ids:
-            access = TemplateCourseAccess(
-                template_course_id=template_course_id,
-                teacher_id=teacher_id,
-            )
-            db.add(access)
-        db.commit()
+    # def add_course_access(
+    #     self, db: Session, *, template_course_id: UUID, teacher_ids: List[UUID]
+    # ) -> None:
+    #     """Add teacher access to the course"""
+    #     for teacher_id in teacher_ids:
+    #         access = TemplateCourseAccess(
+    #             template_course_id=template_course_id,
+    #             teacher_id=teacher_id,
+    #         )
+    #         db.add(access)
+    #     db.commit()
 
     def add_course_materials(
         self, db: Session, *, template_course_id: UUID, library_item_ids: List[UUID], user_id: UUID
