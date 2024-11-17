@@ -3,7 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
-
+from .super_admin import Department
 class TeacherAccess(BaseModel):
     teacher_id: UUID
     
@@ -29,11 +29,11 @@ class TemplateCourseCreate(TemplateCourseBase):
     template_description: Optional[str] = None
     template_year: Optional[str] = None
     course_outline: Optional[str] = None
-    template_course_access: Optional[List[UUID]] = None  # List of teacher IDs
+    # template_course_access: Optional[List[UUID]] = None  # List of teacher IDs
     course_materials: Optional[List[UUID]] = None  # List of library_item_ids
 
 class TemplateCourseUpdate(TemplateCourseBase):
-    template_course_access: Optional[List[UUID]] = None
+    # template_course_access: Optional[List[UUID]] = None
     course_materials: Optional[List[UUID]] = None
 
 class TemplateCourseInDBBase(TemplateCourseBase):
@@ -41,8 +41,10 @@ class TemplateCourseInDBBase(TemplateCourseBase):
     admin_id: UUID
     created_at: datetime
     updated_at: datetime
-    template_course_access: List[TeacherAccess] = []
+    # template_course_access: List[TeacherAccess] = []
     course_materials: List[CourseMaterial] = []
+    department : Department
+    
 
     class Config:
         from_attributes = True
