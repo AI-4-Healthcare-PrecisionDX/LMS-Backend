@@ -140,6 +140,9 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
         db.delete(department)
         db.commit()
         return department
+    
+    def get_departments_by_branch(self, db: Session, *, branch_id: UUID) -> Optional[Department]:
+        return db.query(Department).filter(Department.branch_id == branch_id).all()
 
 
 institution = CRUDInstitution(Institution)

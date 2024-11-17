@@ -341,3 +341,24 @@ def update_student(
             detail="An error occurred while updating the user",
         )
     return user
+
+
+
+@router.get("/departments", response_model=List[schemas.Department])
+def get_departments(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> Any:
+    """
+    Retrieve all departments.
+    """
+    try:
+        departments = crud.department.get_departments_by_branch(db=db, branch_id=current_user.branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the departments",
+        )
+    return departments
