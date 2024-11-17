@@ -23,6 +23,8 @@ def create_questions(
     writing_assignment_broad: int = Form(...),
     scenario_based_mcq: int = Form(...),
     scenario_based_broad: int = Form(...),
+    total_mcq_questions: int = Form(...),
+    total_broad_questions: int = Form(...),
 ):
     if pdf_file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files allowed")
@@ -38,14 +40,16 @@ def create_questions(
         writing_assignment_broad,
         scenario_based_mcq,
         scenario_based_broad,
+        total_mcq_questions,
+        total_broad_questions,
     )
     llm = QuestionLLM(
         question_type_count=question_type_count,
         pdf_file=pdf_file,
     )
 
-    questions = llm.generate_questions()
+    questions, metadata = llm.generate_questions()
 
     # print(questions)
 
-    return {"questions": questions}
+    return {"questions": questions, "metadata": metadata}

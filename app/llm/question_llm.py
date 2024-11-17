@@ -54,7 +54,10 @@ class QuestionLLM:
         text = ""
         pypdf_loader = pypdf.PdfReader(self.pdf.file)
         for page in pypdf_loader.pages:
-            text += page.extract_text()
+            page_text = page.extract_text()
+            # remove '{' and '}' from the page_text
+            page_text = page_text.replace("{", " ").replace("}", " ")
+            text += page_text
 
         splits = self.text_splitter.split_text(text)
         # Number of question greater than N.
@@ -74,9 +77,9 @@ class QuestionLLM:
         start = time.time()
         content = self.format_docs(splits)
         logging.info(f"Formatting time: {time.time() - start}")
-        format_instructions = self.output_parser.get_format_instructions()
+        # format_instructions = self.output_parser.get_format_instructions()
 
-        prompt = self.question_prompt.create_prompt(self.question_type_count)
+        prompt = self.question_prompt.create_prompt(content, self.question_type_count)
 
         logging.info(f"Prompt: {prompt}")
 
@@ -91,8 +94,8 @@ class QuestionLLM:
         # Generate questions with an empty question request
 
         questions_set = chain.invoke(
-            {"content": [content], "format_instructions": [format_instructions]},
+            {"input": [""]},
             config={"callbacks": [langfuse_handler]},
         )
 
-        return questions_set.questions
+        return questions_set.questions, questions_set.metadata
