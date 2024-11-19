@@ -180,7 +180,7 @@ def get_library_file_url(
 
 
 
-@router.get("/library_course_section/{library_id}/file")
+@router.get("/library_course_section/file/{library_id}")
 def get_library_file_url_for_course_and_section_contents(
     library_id: uuid.UUID,
     db: Session = Depends(deps.get_db),
