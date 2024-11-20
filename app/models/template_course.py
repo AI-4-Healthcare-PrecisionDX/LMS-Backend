@@ -31,7 +31,10 @@ class TemplateCourse(Base):
     admin = relationship("Admin", back_populates="template_courses")
     
     department_id = Column(UUID(as_uuid=True), ForeignKey("department.department_id"))
-    department = relationship("Department", back_populates="template_courses")
+    department = relationship("Department", back_populates="template_courses", uselist=False)
+    
+    branch_id = Column(UUID(as_uuid=True), ForeignKey("branch.branch_id"))
+    branch = relationship("Branch", back_populates="template_courses")
     
     sections = relationship("Section", back_populates="template_course")
     
