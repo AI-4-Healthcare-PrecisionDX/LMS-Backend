@@ -4,11 +4,11 @@ from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
 from .super_admin import Department
-class TeacherAccess(BaseModel):
-    teacher_id: UUID
+# class TeacherAccess(BaseModel):
+#     teacher_id: UUID
     
-    class Config:
-        from_attributes = True
+#     class Config:
+#         from_attributes = True
 
 class CourseMaterial(BaseModel):
     library_item_id: UUID
@@ -43,11 +43,12 @@ class TemplateCourseInDBBase(TemplateCourseBase):
     updated_at: datetime
     # template_course_access: List[TeacherAccess] = []
     course_materials: List[CourseMaterial] = []
-    department : Department
+    branch_id: UUID
     
 
     class Config:
         from_attributes = True
 
 class TemplateCourse(TemplateCourseInDBBase):
+    department : Optional[Department]
     pass

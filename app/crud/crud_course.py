@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 from app.crud.base import CRUDBase
 from app.models.template_course import TemplateCourse
-from app.models.template_course_access import TemplateCourseAccess
+# from app.models.template_course_access import TemplateCourseAccess
 from app.models.template_course_materials import CourseMaterials
 from app.models.admin import Admin
 from app.schemas.course import TemplateCourseCreate, TemplateCourseUpdate
@@ -18,8 +18,12 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
             .filter(TemplateCourse.template_course_id == id).first()
         )
     
+    def get_courses_by_branch_id(self, db: Session, limit:int,skip:int, branch_id: UUID):
+        return db.query(TemplateCourse).filter(TemplateCourse.branch_id==branch_id).offset(skip).limit(limit).all()
+        
+    
     def get_courses_by_department(
-        self, db: Session, *, department_id: UUID
+        self, db: Session, *, department_id: UUID,
     ) -> List[TemplateCourse]:
         return (
             db.query(TemplateCourse)
@@ -30,7 +34,7 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         return db.query(Admin).filter(Admin.user_id == user_id).first()
 
     def create_base_course(
-        self, db: Session, *, obj_in: TemplateCourseCreate, admin_id: UUID
+        self, db: Session, *, obj_in: TemplateCourseCreate, admin_id: UUID, branch_id: UUID
     ) -> TemplateCourse:
         """Create the base course without materials or access"""
         db_obj = TemplateCourse(
@@ -40,6 +44,7 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
             course_outline=obj_in.course_outline,
             department_id=obj_in.department_id,
             admin_id=admin_id,
+            branch_id=branch_id
         )
         db.add(db_obj)
         db.commit()
@@ -79,36 +84,40 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         obj_in: TemplateCourseUpdate | Dict[str, Any],
         user_id: UUID
     ) -> TemplateCourse:
+        """
+        Update a template course with only the fields provided in obj_in.
+        Preserves existing values for fields not included in the update.
+        
+        Args:
+            db: Database session
+            db_obj: Existing TemplateCourse object from database
+            obj_in: Update data (either Pydantic model or dict)
+            user_id: ID of user performing the update
+        
+        Returns:
+            Updated TemplateCourse object
+        """
+        # Convert input to dictionary if it's a Pydantic model
         if isinstance(obj_in, dict):
             update_data = obj_in.copy()
-            teacher_ids = update_data.pop('template_course_access', None)
             library_item_ids = update_data.pop('course_materials', None)
         else:
-            update_data = obj_in.model_dump(exclude={'template_course_access', 'course_materials'})
-            teacher_ids = obj_in.template_course_access
-            library_item_ids = obj_in.course_materials
+            update_data = obj_in.model_dump(exclude_unset=True)  # Only get fields that were set
+            library_item_ids = update_data.pop('course_materials', None) if 'course_materials' in update_data else None
 
-        # Update base course
-        updated_course = super().update(db, db_obj=db_obj, obj_in=update_data)
+        # Update only the fields that are present in update_data
+        for field, value in update_data.items():
+            if hasattr(db_obj, field):
+                setattr(db_obj, field, value)
         
-        # Update access if provided
-        if teacher_ids is not None:
-            db.query(TemplateCourseAccess).filter(
-                TemplateCourseAccess.template_course_id == db_obj.template_course_id
-            ).delete()
-            
-            self.add_course_access(
-                db=db,
-                template_course_id=db_obj.template_course_id,
-                teacher_ids=teacher_ids
-            )
-            
         # Update materials if provided
         if library_item_ids is not None:
+            # Delete existing materials
             db.query(CourseMaterials).filter(
                 CourseMaterials.template_course_id == db_obj.template_course_id
             ).delete()
             
+            # Add new materials
             self.add_course_materials(
                 db=db,
                 template_course_id=db_obj.template_course_id,
@@ -116,23 +125,22 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
                 user_id=user_id
             )
         
+        # Commit changes
+        db.add(db_obj)
         db.commit()
+        db.refresh(db_obj)
         
-        # Refresh with related data
-        return (
-            db.query(TemplateCourse)
-            .filter(TemplateCourse.template_course_id == updated_course.template_course_id).first()
-        )
-
+        return db_obj
+    
     def delete_course(self, db: Session, *, id: UUID) -> Dict[str, Any]:
         course = self.get_course_by_id(db=db, id=id)
         if not course:
             raise ValueError("Course not found")
             
         # Delete associated records first
-        db.query(TemplateCourseAccess).filter(
-            TemplateCourseAccess.template_course_id == id
-        ).delete()
+        # db.query(TemplateCourseAccess).filter(
+        #     TemplateCourseAccess.template_course_id == id
+        # ).delete()
         
         db.query(CourseMaterials).filter(
             CourseMaterials.template_course_id == id
@@ -143,22 +151,25 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         db.commit()
         return {"message": "Course and associated records deleted successfully"}
     
-    def check_if_teacher_has_access(self, db: Session, *, template_course_id: UUID, user_id: UUID) -> bool:
-        try:
-            teacher = user.get_teacher_by_user_id(db=db, id=user_id)
-            if not teacher:
-                HTTPException(status_code=404, detail="Teacher not found")
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    # def check_if_teacher_has_access(self, db: Session, *, template_course_id: UUID, user_id: UUID) -> bool:
+    #     try:
+    #         teacher = user.get_teacher_by_user_id(db=db, id=user_id)
+    #         if not teacher:
+    #             HTTPException(status_code=404, detail="Teacher not found")
+    #     except Exception as e:
+    #         raise HTTPException(status_code=500, detail=str(e))
         
-        try:
-            template_course_access = db.query(TemplateCourseAccess).filter(
-                TemplateCourseAccess.template_course_id == template_course_id,
-                TemplateCourseAccess.teacher_id == teacher.teacher_id
-            ).first()
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    #     try:
+    #         template_course_access = db.query(TemplateCourseAccess).filter(
+    #             TemplateCourseAccess.template_course_id == template_course_id,
+    #             TemplateCourseAccess.teacher_id == teacher.teacher_id
+    #         ).first()
+    #     except Exception as e:
+    #         raise HTTPException(status_code=500, detail=str(e))
         
-        return True if template_course_access else False
-
+    #     return True if template_course_access else False
+    
+    
+    
+    
 template_course = CRUDTemplateCourse(TemplateCourse)

@@ -11,6 +11,7 @@ from app.schemas.course import (
     TemplateCourseCreate,
     TemplateCourseUpdate,
 )
+from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
 
@@ -29,7 +30,8 @@ def get_courses(
             status_code=403,
             detail="Not enough permissions"
         )
-    courses = crud.template_course.get_multi(db, skip=skip, limit=limit)
+    courses = crud.template_course.get_courses_by_branch_id(db, limit=limit,skip=skip,branch_id = current_user.branch_id)
+    #convert pydantic courses to json
     return courses
 
 @router.get("/department/{department_id}", response_model=List[TemplateCourse])
@@ -67,13 +69,13 @@ def get_course(
             detail="Not enough permissions"
         )
         
-    if current_user.role == "teacher" and not crud.template_course.check_if_teacher_has_access(
-        db=db, template_course_id=course_id, user_id=current_user.user_id
-    ):
-        raise HTTPException(
-            status_code=403,
-            detail="Not enough permissions"
-        )
+    # if current_user.role == "teacher" and not crud.template_course.check_if_teacher_has_access(
+    #     db=db, template_course_id=course_id, user_id=current_user.user_id
+    # ):
+    #     raise HTTPException(
+    #         status_code=403,
+    #         detail="Not enough permissions"
+    #     )
         
     course = crud.template_course.get_course_by_id(db=db, id=course_id)
     if not course:
@@ -114,7 +116,8 @@ def create_course(
         course = crud.template_course.create_base_course(
             db=db,
             obj_in=course_in,
-            admin_id=admin.admin_id
+            admin_id=admin.admin_id,
+            branch_id = current_user.branch_id
         )
         
         # Add teacher access if provided
