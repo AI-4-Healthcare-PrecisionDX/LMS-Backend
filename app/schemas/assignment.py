@@ -7,9 +7,9 @@ from typing import Dict, Any
 
 # Assignment Question Schemas
 class AssignmentQuestionBase(BaseModel):
-    question_type: str
+    question_type: Optional[str] = None
     question_text: str
-    expected_answer: str
+    expected_answer: Optional[List[str]] = None
     options_for_mcq: Optional[List[str]] = None
     marks: int
     question_description: Optional[str] = None
@@ -20,7 +20,7 @@ class AssignmentQuestionCreate(AssignmentQuestionBase):
 class AssignmentQuestionUpdate(BaseModel):
     question_type: Optional[str] = None
     question_text: Optional[str] = None
-    expected_answer: Optional[str] = None
+    expected_answer: Optional[List[str]] = None
     options_for_mcq: Optional[List[str]] = None
     marks: Optional[int] = None
     question_description: Optional[str] = None

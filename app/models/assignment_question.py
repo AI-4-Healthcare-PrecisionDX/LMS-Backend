@@ -19,9 +19,9 @@ class AssignmentQuestion(Base):
         index=True,
     )
     
-    question_type = Column(String, nullable=False)
+    question_type = Column(String, nullable=True)
     question_text = Column(String, nullable=False)
-    expected_answer = Column(String, nullable=False)
+    expected_answer = Column(ARRAY(String), nullable=True)
     options_for_mcq = Column(ARRAY(String), nullable=True)
     marks = Column(Integer, nullable=False)
     question_description = Column(String, nullable=True)
