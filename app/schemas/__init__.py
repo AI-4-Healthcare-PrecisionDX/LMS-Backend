@@ -60,3 +60,10 @@ from .discussion_reply_message import (
     DiscussionReplyMessageCreate,
     DiscussionReplyMessageBase,
 )
+
+
+from .student_event import (
+    Event,
+    EventCreate,
+    EventUpdate,
+)
