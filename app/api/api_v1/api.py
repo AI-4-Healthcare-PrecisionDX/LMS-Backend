@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 
 
-from app.api.api_v1.endpoints import login, users, super_admin, admin, course, utils,section, discussion, assignment, discussion_message
+from app.api.api_v1.endpoints import login, users, super_admin, admin, course, utils,section, discussion, assignment, discussion_message, student_event
 
 
 
@@ -27,3 +27,5 @@ api_router.include_router(discussion_message.router, prefix="/discussion_message
 
 # api_router.include_router(teacher.router, prefix="/teacher", tags=["teacher"])
 # api_router.include_router(student.router, prefix="/student", tags=["student"])
+
+api_router.include_router(student_event.router, prefix="/student-event", tags=["student-event"])

@@ -63,7 +63,7 @@ from .discussion_reply_message import (
 
 
 from .student_event import (
-    Event,
-    EventCreate,
-    EventUpdate,
+    StudentEvent,
+    StudentEventCreate,
+    StudentEventUpdate,
 )

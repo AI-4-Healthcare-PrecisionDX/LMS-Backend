@@ -30,3 +30,5 @@ class Student(Base):
     inboxes = relationship("Inbox", back_populates="student")
     
     assignment_submissions = relationship("AssignmentSubmission", back_populates="student")
+
+    student_event = relationship("StudentEvent", back_populates="student")
