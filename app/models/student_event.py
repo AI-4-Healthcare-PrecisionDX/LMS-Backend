@@ -10,6 +10,7 @@ from app.db.base_class import Base
 
 
 class StudentEvent(Base):
+    __tablename__ = "student_event"
     event_id = Column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -17,18 +18,18 @@ class StudentEvent(Base):
         unique=True,
         index=True,
     )
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=True)
-    topics = Column(ARRAY(String), nullable=True)  # arr
-    date = Column(DateTime, nullable=False)
-    link = Column(String, nullable=True)
-    is_completed = Column(Boolean, default=False)
-
+    event_title = Column(String, nullable=False)
+    event_topics = Column(ARRAY(String), nullable=True, default=list) 
+    event_description = Column(String, nullable=True)
+    event_link = Column(String, nullable=True)
+    event_date = Column(DateTime, nullable=True)
+    is_completed = Column(Boolean,nullable=False, default=False)
+    
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
-
-
-    student_id = Column(UUID(as_uuid=True), ForeignKey("student.student_id"), nullable=False)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    student_id = Column(UUID(as_uuid=True), ForeignKey("student.student_id"))
+    student = relationship("Student", back_populates="student_event")
     
 
-    student = relationship("Student", back_populates="student_event")
+    

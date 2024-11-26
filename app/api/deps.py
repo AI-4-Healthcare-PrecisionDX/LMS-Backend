@@ -85,6 +85,18 @@ def get_current_active_teacher_user(
 
     return teacher
 
+def get_current_active_student_user(
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+) -> models.Student:
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403, detail="Only students can perform this action"
+        )
+
+    student = crud.user.get_student_by_user_id(db, id=current_user.user_id)
+
+    return student
 
 def get_current_active_superuser(
     current_user: models.User = Depends(get_current_user),
