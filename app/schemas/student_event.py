@@ -7,18 +7,18 @@ from datetime import datetime
 
 
 class StudentEventBase(BaseModel):
-    title: Optional[str] = None
-    description: Optional[str] = None
-    topics: Optional[List[str]] = None
-    date: Optional[datetime] = None
-    link: Optional[str] = None
-    is_completed: Optional[bool] = False
+    event_title: Optional[str] = None
+    event_description: Optional[str] = None
+    event_topics: Optional[List[str]] = None
+    event_date: Optional[datetime] = None
+    event_link: Optional[str] = None
+
     
 
 class StudentEventCreate(StudentEventBase):
-    title: str
-    description: str
-    date: datetime
+    event_title: str
+    event_description: str
+    event_date: datetime
 
 
 

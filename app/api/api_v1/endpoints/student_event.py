@@ -33,14 +33,14 @@ def create_student_event(
     *,
     db: Session = Depends(deps.get_db),
     event_in: StudentEventCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_student: models.User = Depends(deps.get_current_active_student_user),
 ) -> Any:
     """
     Create a new student event (Only for authorized users).
     """
     try:
         event = crud.student_event.create_student_event(
-            db, obj_in=event_in, student_id=current_user.user_id
+            db, obj_in=event_in, student_id=current_student.student_id
         )
     except Exception as e:
         print(f"Error creating student event: {str(e)}")  # Log the specific error
