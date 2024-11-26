@@ -4,6 +4,11 @@ from typing import Any, Dict, List, Optional, Union
 
 from pydantic import AnyHttpUrl, EmailStr, HttpUrl, PostgresDsn, validator
 
+from functools import lru_cache
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/v1"
@@ -42,7 +47,20 @@ class Settings(BaseSettings):
     GOOGLE_APPLICATION_CREDENTIALS: str
     GOOGLE_STORAGE_BUCKET: str
 
+    LANGFUSE_SECRET_KEY: str
+    LANGFUSE_PUBLIC_KEY: str
+    LANGFUSE_HOST: str
+
+    OPENAI_API_KEY: str
+    OPENAI_MODEL: str
+
     model_config = SettingsConfigDict(env_file=".env")
+
+
+@lru_cache
+def get_settings():
+    load_dotenv(override=True)
+    return Settings()
 
 
 settings = Settings()

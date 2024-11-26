@@ -31,10 +31,12 @@ class TemplateCourse(Base):
     admin = relationship("Admin", back_populates="template_courses")
     
     department_id = Column(UUID(as_uuid=True), ForeignKey("department.department_id"))
-    department = relationship("Department", back_populates="template_courses")
+    department = relationship("Department", back_populates="template_courses", uselist=False)
     
-    sections = relationship("Section", back_populates="template_course")
+    branch_id = Column(UUID(as_uuid=True), ForeignKey("branch.branch_id"))
+    branch = relationship("Branch", back_populates="template_courses")
     
-    course_materials = relationship("CourseMaterials", back_populates="template_course")
+    sections = relationship("Section", back_populates="template_course", cascade="all, delete")
     
-    template_course_access = relationship("TemplateCourseAccess", back_populates="template_course")
+    course_materials = relationship("CourseMaterials", back_populates="template_course", cascade="all, delete")
+    

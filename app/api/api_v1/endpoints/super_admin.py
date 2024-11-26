@@ -272,24 +272,19 @@ def create_department(
     *,
     db: Session = Depends(deps.get_db),
     department_in: schemas.DepartmentCreate,
-    current_user: models.User = Depends(deps.get_current_active_superuser),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new department.
     """
-    try:
-        get_branch = crud.branch.get_branch_by_id(db, id=department_in.branch_id)
-    except Exception as e:
+    
+    if current_user.role != "admin":
         raise HTTPException(
-            status_code=500,
-            detail="An error occurred while retrieving the branch",
+            status_code=403, detail="Only admins can perform this action"
         )
-
-    if get_branch is None:
-        raise HTTPException(status_code=404, detail="Branch not found")
-
+    
     try:
-        department = crud.department.create_department(db, obj_in=department_in)
+        department = crud.department.create_department(db, obj_in=department_in, branch_id=current_user.branch_id)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -309,6 +304,12 @@ def read_departments(
     """
     Retrieve departments.
     """
+    
+    if current_user.role != "admin" and current_user.role != "superuser":
+        raise HTTPException(
+            status_code=403, detail="Only admins and superadmins can perform this action"
+        )
+        
     try:
         departments = crud.department.get_multi(db, skip=skip, limit=limit)
     except Exception as e:
@@ -324,11 +325,17 @@ def read_departments(
 def read_department_by_id(
     department_id: str,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_superuser),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get a specific department by ID.
     """
+    
+    if current_user.role != "admin" and current_user.role != "superuser":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+        
     try:
         department = crud.department.get_department_by_id(db, id=department_id)
     except Exception as e:
@@ -353,6 +360,13 @@ def update_department(
     """
     Update a department.
     """
+    
+    if current_user.role != "admin" and current_user.role != "superuser":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+        
+        
     try:
         department = crud.department.get_department_by_id(db, id=department_id)
     except Exception as e:

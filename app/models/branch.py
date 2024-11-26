@@ -31,3 +31,4 @@ class Branch(Base):
     institution = relationship("Institution", back_populates="branches")
     departments = relationship("Department", back_populates="branch")
     users = relationship("User", back_populates="branch")
+    template_courses = relationship("TemplateCourse", back_populates="branch")

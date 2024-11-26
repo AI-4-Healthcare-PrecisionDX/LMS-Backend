@@ -12,6 +12,7 @@ from app.schemas.user import (
     UserCreateBySuperUser,
     UserCreateTeacher,
     UserCreateStudent,
+    UserCreateAdmin,
     Student,
     Teacher,
 )
@@ -39,6 +40,7 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             username=unique_username,
             gender=obj_in.gender,
             phone_number=obj_in.phone_number,
+            role="user",
         )
         db.add(db_obj)
         db.commit()
@@ -51,24 +53,35 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
 
         return db_obj
 
-    def create_teacher(
+    def create_admin_by_admin(
+        self, db: Session, *, obj_in: UserCreateAdmin, branch_id: UUID
+    ) -> User:
+        unique_username = (
+            f"{obj_in.first_name.lower()}_{obj_in.last_name.lower()}_{uuid4().hex[:5]}"
+        )
+        db_obj = self.create(db, obj_in=obj_in)
+        db_obj.role = "admin"
+        db_obj.branch_id = branch_id
+        db.commit()
+        db.refresh(db_obj)
+
+        admin = Admin(user_id=db_obj.user_id)
+        db.add(admin)
+        db.commit()
+        db.refresh(admin)
+
+        result = db.query(User).filter(User.user_id == db_obj.user_id).first()
+        return result
+
+    def create_teacher_by_admin(
         self, db: Session, *, obj_in: UserCreateTeacher, branch_id: UUID
     ) -> User:
         unique_username = (
             f"{obj_in.first_name.lower()}_{obj_in.last_name.lower()}_{uuid4().hex[:5]}"
         )
-        db_obj = User(
-            email=obj_in.email,
-            password=get_password_hash(obj_in.password),
-            first_name=obj_in.first_name,
-            last_name=obj_in.last_name,
-            username=unique_username,
-            phone_number=obj_in.phone_number,
-            gender=obj_in.gender,
-            role="teacher",
-            branch_id=branch_id,
-        )
-        db.add(db_obj)
+        db_obj = self.create(db, obj_in=obj_in)
+        db_obj.role = "teacher"
+        db_obj.branch_id = branch_id
         db.commit()
         db.refresh(db_obj)
 
@@ -77,26 +90,69 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db.commit()
         db.refresh(teacher)
 
-        user_settings = UserSettings(user_id=db_obj.user_id)
-        db.add(user_settings)
+        result = db.query(User).filter(User.user_id == db_obj.user_id).first()
+        return result
+
+    def create_student_by_admin(
+        self, db: Session, *, obj_in: UserCreateStudent, branch_id: UUID
+    ) -> User:
+        unique_username = (
+            f"{obj_in.first_name.lower()}_{obj_in.last_name.lower()}_{uuid4().hex[:5]}"
+        )
+        db_obj = self.create(db, obj_in=obj_in)
+        db_obj.role = "student"
+        db_obj.branch_id = branch_id
         db.commit()
-        db.refresh(user_settings)
+        db.refresh(db_obj)
+
+        student = Student(user_id=db_obj.user_id, metric_id=obj_in.metric_id)
+        db.add(student)
+        db.commit()
+        db.refresh(student)
 
         result = db.query(User).filter(User.user_id == db_obj.user_id).first()
         return result
+
+    def get_admin_by_user_id(
+        self, db: Session, *, user_id: UUID
+    ) -> Optional[Admin]:  # Changed parameter name from admin_id to id
+        return db.query(Admin).filter(Admin.user_id == user_id).first()
 
     def get_teacher_by_id(
         self, db: Session, *, id: UUID
     ) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
         return db.query(Teacher).filter(Teacher.teacher_id == id).first()
 
+    def get_teacher_by_user_id(
+        self, db: Session, *, id: UUID
+    ) -> Optional[Teacher]:  # Changed parameter name from teacher_id to id
+        return db.query(Teacher).filter(Teacher.user_id == id).first()
+
+    def get_student_by_user_id(
+        self, db: Session, *, id: UUID
+    ) -> Optional[Student]:  # Keep consistent naming
+        return db.query(Student).filter(Student.user_id == id).first()
+
     def get_student_by_id(
         self, db: Session, *, id: UUID
     ) -> Optional[Student]:  # Keep consistent naming
+
         return db.query(Student).filter(Student.student_id == id).first()
 
+    def get_all_admins(
+        self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: UUID
+    ) -> list[User]:
+        admins = (
+            db.query(User)
+            .filter(User.branch_id == branch_id, User.role == "admin")
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        return admins
+
     def get_all_teachers(
-        self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: str
+        self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: UUID
     ) -> list[User]:
         # Get those teachers from the database whose branch_id matches the branch_id passed as an argument.
         teachers = (
@@ -109,9 +165,15 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return teachers
 
     def get_all_students(
-        self, db: Session, *, skip: int = 0, limit: int = 100
+        self, db: Session, *, skip: int = 0, limit: int = 100, branch_id: UUID
     ) -> list[Student]:
-        students = db.query(Student).offset(skip).limit(limit).all()
+        students = (
+            db.query(User)
+            .filter(User.branch_id == branch_id, User.role == "student")
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
         return students
 
     def create_student(self, db: Session, *, obj_in: UserCreateStudent) -> Student:

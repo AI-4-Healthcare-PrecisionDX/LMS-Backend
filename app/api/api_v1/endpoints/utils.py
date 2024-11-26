@@ -1,5 +1,3 @@
-#app/api/api_v1/endpoints/utils.py
-
 from typing import Any, List, Optional
 import json
 from fastapi import (
@@ -28,12 +26,11 @@ from app.core.config import settings
 
 router = APIRouter()
 
-
-@router.post("library/file_upload", response_model=schemas.Library)
+@router.post("/library/file_upload", response_model=schemas.Library)
 def upload_file(
     db: Session = Depends(deps.get_db),
-    pdf_file: UploadFile = File(...),
-    json_file: UploadFile = File(...),
+    pdf_file: UploadFile = File(...),  # Required
+    json_file: Optional[UploadFile] = File(default=None),  # Optional
     material_type: str = Form(...),
     material_title: str = Form(...),
     material_description: Optional[str] = Form(None),
@@ -41,23 +38,25 @@ def upload_file(
     visibility: Optional[bool] = Form(True),
     current_user: models.User = Depends(deps.get_current_active_user),
 ):
-    if (
-        pdf_file.content_type != "application/pdf"
-        or json_file.content_type != "application/json"
-    ):
-        raise HTTPException(status_code=400, detail="Only PDF and JSON files allowed")
+    if pdf_file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files allowed")
+
+    # Validate JSON file type only if it's provided
+    if json_file and json_file.content_type != "application/json":
+        raise HTTPException(status_code=400, detail="JSON file must be of type application/json")
 
     try:
         storage_client = storage.Client()
         bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
-        # create a folder in the bucket with a unique name using uuid upto 16 characters
         folder_name = str(uuid.uuid4())[:16]
-        folder = bucket.blob(folder_name)
-        # upload the files to the folder
         pdf_blob = bucket.blob(f"{folder_name}/{pdf_file.filename}")
         pdf_blob.upload_from_file(pdf_file.file)
-        json_blob = bucket.blob(f"{folder_name}/{json_file.filename}")
-        json_blob.upload_from_file(json_file.file)
+
+        # Upload JSON file if provided
+        if json_file:
+            json_blob = bucket.blob(f"{folder_name}/{json_file.filename}")
+            json_blob.upload_from_file(json_file.file)
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -173,6 +172,54 @@ def get_library_file_url(
         )
 
         return {"file_url": url}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while generating file URL: {str(e)}",
+        )
+
+
+
+@router.get("/library_course_section/file/{library_id}")
+def get_library_file_url_for_course_and_section_contents(
+    library_id: uuid.UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+):
+    library = crud.library.get_by_uuid(db, library_id=library_id)
+    if not library:
+        raise HTTPException(status_code=404, detail="Library not found")
+    # if library.user_id != current_user.user_id and not library.visibility:
+    #     raise HTTPException(
+    #         status_code=403, detail="You do not have permission to access this library"
+    #     )
+
+    try:
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        folder_name = library.material_file
+        blobs = bucket.list_blobs(prefix=f"{folder_name}/")
+        pdf_blob = next((blob for blob in blobs if blob.name.endswith(".pdf")), None)
+
+        if not pdf_blob:
+            raise HTTPException(status_code=404, detail="PDF file not found")
+
+        # Generate a signed URL that expires in 1 hour
+        url = pdf_blob.generate_signed_url(
+            version="v4",
+            expiration=datetime.utcnow() + timedelta(minutes=10),
+            method="GET",
+        )
+
+        return {"file_url": url,
+                "material_type": library.material_type,
+                "material_title": library.material_title,
+                "material_description": library.material_description,
+                "created_at": library.created_at,
+                "updated_at": library.updated_at,
+                "author": library.author,
+                }
 
     except Exception as e:
         raise HTTPException(

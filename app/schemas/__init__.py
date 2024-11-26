@@ -1,4 +1,19 @@
-from .user import User, UserCreate, UserInDB, UserUpdate, UserCreateBySuperUser, Teacher
+# app/schemas/__init__.py
+
+from .user import (
+    User,
+    UserCreate,
+    UserInDB,
+    UserUpdate,
+    UserCreateBySuperUser,
+    Teacher,
+    Admin,
+    Student,
+    UserCreateTeacher,
+    UserCreateAdmin,
+    UserCreateStudent,
+)
+
 from .token import Token, TokenPayload
 from .super_admin import (
     Department,
@@ -23,6 +38,10 @@ from .section import (
     SectionBase,
     SectionCreate,
     SectionUpdate,
+    SectionExclusiveContentBase,
+    SectionExclusiveContentCreate,
+    SectionExclusiveContentByCourseTeacher,
+    SectionExclusiveContentByCourseTeacherCreate,
 )
 
 from .library import (
@@ -33,15 +52,19 @@ from .library import (
 )
 
 
+
 from .assignment import (
     AssignmentBase,
     AssignmentCreate,
     AssignmentUpdate,
-    AssignmentOut,
+    Assignment,
     AssignmentQuestionBase,
     AssignmentQuestionCreate,
     AssignmentQuestionUpdate,
-    AssignmentQuestionOut,
+    AssignmentQuestionInDB,
+    AssignmentMaterialBase,
+    AssignmentMaterialInDB,
+    DeleteAssignmentResponse
 )
 
 from .discussion import (
@@ -60,6 +83,7 @@ from .discussion_reply_message import (
     DiscussionReplyMessageCreate,
     DiscussionReplyMessageBase,
 )
+
 
 
 from .student_event import (

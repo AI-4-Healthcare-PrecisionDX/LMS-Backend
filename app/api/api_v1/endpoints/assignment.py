@@ -1,280 +1,375 @@
+# app/api/api_v1/endpoints/assignment.py
 from typing import Any, List
-
-from fastapi import APIRouter, Body, Depends, HTTPException
-from fastapi.encoders import jsonable_encoder
-from pydantic.networks import EmailStr
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from app import crud, models, schemas
 from app.api import deps
 
 router = APIRouter()
 
-
-
-@router.get("/", response_model=List[schemas.AssignmentQuestionOut])
-def get_questions(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Retrieve questions.
-    """
-    # if current_user.role != "admin":
-    #     raise HTTPException(
-    #         status_code=403,
-    #         detail="You do not have permission to perform this action",
-    #     )
-    questions = crud.assignment_question.get_multi(db, skip=skip, limit=limit)
-    return questions
-
-@router.get("/{id}", response_model=schemas.AssignmentQuestionOut)
-def get_question_by_id(
-    *,
-    db: Session = Depends(deps.get_db),
-    id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Retrieve question by ID.
-    """
-    question = crud.assignment_question.get_question_by_id(db, id=id)
-    if not question:
-        raise HTTPException(
-            status_code=404,
-            detail="The question with this ID does not exist in the system",
-        )
-    return question
-
-
-
-@router.post("/create-question", response_model=schemas.AssignmentQuestionOut)
-def create_question(
-    *,
-    db: Session = Depends(deps.get_db),
-    question_in: schemas.AssignmentQuestionCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Create new question.
-    """
-    
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to perform this action",
-        )
-        
-    print(f"Current user: {current_user}")
-    
-    try:
-        admin = crud.assignment_question.get_admin_by_user_id(db, user_id=current_user.user_id)
-    except Exception as e:
-        print(f"Error retrieving admin: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred while retrieving the admin",
-        )
-        
-    question = crud.assignment_question.create_question(db, obj_in=question_in, admin_id=admin.admin_id)
-    return question
-
-
-@router.put("/{id}", response_model=schemas.AssignmentQuestionOut)
-def update_question(
-    *,
-    db: Session = Depends(deps.get_db),
-    id: str,
-    question_in: schemas.AssignmentQuestionUpdate,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Update an question.
-    """
-    
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to perform this action",
-        )
-        
-    question = crud.assignment_question.get_question_by_id(db, id=id)
-    if not question:
-        raise HTTPException(
-            status_code=404,
-            detail="The question with this ID does not exist in the system",
-        )
-    
-    try:
-        updated_question = crud.assignment_question.update_question(db, db_obj=question, obj_in=question_in, admin_id=current_user.user_id)
-    except Exception as e:
-        print(f"Error updating question: {str(e)}")
-        
-        
-    return updated_question
-
-
-@router.delete("/{id}", response_model=schemas.AssignmentQuestionOut)
-def delete_question(
-    *,
-    db: Session = Depends(deps.get_db),
-    id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Delete an question.
-    """
-    
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to perform this action",
-        )
-        
-    question = crud.assignment_question.get_question_by_id(db, id=id)
-    if not question:
-        raise HTTPException(
-            status_code=404,
-            detail="The question with this ID does not exist in the system",
-        )
-    
-    try:
-        crud.assignment_question.delete_question(db, id=id)
-    except Exception as e:
-        print(f"Error deleting question: {str(e)}")
-        
-    return question
-
-
-
-@router.get("/assignment", response_model=List[schemas.AssignmentOut])
-def get_assignments(
-    db: Session = Depends(deps.get_db),
-    skip: int = 0,
-    limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Retrieve assignments.
-    """
-    assignments = crud.assignment.get_multi(db, skip=skip, limit=limit)
-    return assignments
-
-@router.get("/assignment/{id}", response_model=schemas.AssignmentOut)
-def get_assignment_by_id(
-    *,
-    db: Session = Depends(deps.get_db),
-    id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
-) -> Any:
-    """
-    Retrieve assignment by ID.
-    """
-    assignment = crud.assignment.get_assignment_by_id(db, id=id)
-    if not assignment:
-        raise HTTPException(
-            status_code=404,
-            detail="The assignment with this ID does not exist in the system",
-        )
-    return assignment
-
-@router.post("/create-assignment", response_model=schemas.AssignmentOut)
+@router.post("/create-assignment", response_model=schemas.Assignment)
 def create_assignment(
     *,
     db: Session = Depends(deps.get_db),
     assignment_in: schemas.AssignmentCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user)
 ) -> Any:
-    """
-    Create new assignment.
-    """
     
-    if current_user.role != "teacher":
+
+    # Verify section exists and teacher has access
+    section = crud.section.get_section_by_id(db=db, id=assignment_in.section_id)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    if not crud.section.check_section_owner(
+        db=db,
+        section_id=section.section_id,
+        teacher_id=current_teacher.teacher_id
+    ):
         raise HTTPException(
             status_code=403,
-            detail="You do not have permission to perform this action",
+            detail="You don't have permission to remove content from this section"
         )
-        
-    print(f"Current user: {current_user}")
-    
+
     try:
-        admin = crud.assignment.get_admin_by_user_id(db, user_id=current_user.user_id)
-    except Exception as e:
-        print(f"Error retrieving admin: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="An error occurred while retrieving the admin",
-        )
-        
-    assignment = crud.assignment.create_assignment(db, obj_in=assignment_in)
+        return crud.assignment.create_assignment(db=db, obj_in=assignment_in)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    
+
+@router.get("/section/{section_id}/assignments", response_model=List[schemas.Assignment])
+def read_section_assignments(
+    section_id: UUID,
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Get all assignments for a section.
+    """
+    # Verify section exists and user has access
+    section = crud.section.get_section_by_id(db=db, id=section_id)
+    if not section:
+        raise HTTPException(status_code=404, detail="Section not found")
+
+    if current_user.role == "teacher":
+        teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+        if not teacher or section.teacher_id != teacher.teacher_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to view assignments in this section"
+            )
+
+    return crud.assignment.get_by_section(db=db, section_id=section_id, skip=skip, limit=limit)
+
+@router.get("/{assignment_id}", response_model=schemas.Assignment)
+def read_assignment(
+    assignment_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Get assignment by ID.
+    """
+    assignment = crud.assignment.get_by_id(db=db, id=assignment_id)
+    if not assignment:
+        raise HTTPException(status_code=404, detail="Assignment not found")
+
+    # Verify user has access
+    section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
+    if current_user.role == "teacher":
+        teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+        if not teacher or section.teacher_id != teacher.teacher_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to view this assignment"
+            )
+
     return assignment
 
-
-@router.put("/assignment/{id}", response_model=schemas.AssignmentOut)
+@router.put("/{assignment_id}", response_model=schemas.Assignment)
 def update_assignment(
     *,
     db: Session = Depends(deps.get_db),
-    id: str,
+    assignment_id: UUID,
     assignment_in: schemas.AssignmentUpdate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user)
 ) -> Any:
     """
-    Update an assignment.
+    Update an assignment including its materials and questions.
     """
-    
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="You do not have permission to perform this action",
-        )
-        
-    assignment = crud.assignment.get_assignment_by_id(db, id=id)
-    if not assignment:
-        raise HTTPException(
-            status_code=404,
-            detail="The assignment with this ID does not exist in the system",
-        )
-    
     try:
-        updated_assignment = crud.assignment.update_assignment(db, db_obj=assignment, obj_in=assignment_in, admin_id=current_user.user_id)
+        # Get the existing assignment
+        assignment = crud.assignment.get_by_id(db=db, id=assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+
+        # Verify teacher has access
+        section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
+        if not section:
+            raise HTTPException(status_code=404, detail="Section not found")
+
+        teacher = crud.user.get_teacher_by_user_id(db=db, id=current_teacher.user_id)
+        if not teacher or section.teacher_id != teacher.teacher_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to update this assignment"
+            )
+
+        # Validate the total marks matches sum of question marks if questions are being updated
+        if assignment_in.questions:
+            total_marks = sum(q.marks for q in assignment_in.questions)
+            if assignment_in.total_marks is not None:
+                if total_marks != assignment_in.total_marks:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Total marks must match sum of individual question marks"
+                    )
+            else:
+                assignment_in.total_marks = total_marks
+
+        # Validate number of questions if being updated
+        if assignment_in.questions:
+            num_questions = len(assignment_in.questions)
+            if assignment_in.number_of_questions is not None:
+                if num_questions != assignment_in.number_of_questions:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Number of questions must match actual question count"
+                    )
+            else:
+                assignment_in.number_of_questions = num_questions
+
+        # Update the assignment
+        updated_assignment = crud.assignment.update(
+            db=db,
+            db_obj=assignment,
+            obj_in=assignment_in
+        )
+        return updated_assignment
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        print(f"Error updating assignment: {str(e)}")
-        
-        
-    return updated_assignment
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
 
-
-@router.delete("/assignment/{id}", response_model=schemas.AssignmentOut)
+@router.delete("/{assignment_id}", response_model=schemas.DeleteAssignmentResponse)
 def delete_assignment(
     *,
     db: Session = Depends(deps.get_db),
-    id: str,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    assignment_id: UUID,
+    current_teacher: models.User = Depends(deps.get_current_active_teacher_user)
 ) -> Any:
     """
-    Delete an assignment.
+    Delete an assignment and all related content.
     """
+    try:
+        # Get assignment for permission check
+        assignment = crud.assignment.get_by_id(db=db, id=assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+
+        # Verify teacher has access
+        if not crud.section.check_section_owner(
+        db=db,
+        section_id=assignment.section_id,
+        teacher_id=current_teacher.teacher_id):
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to remove content from this section"
+            )
+        
+        # Delete the assignment and get the result
+        crud.assignment.delete_assignment(db=db, assignment_id=assignment_id)
+        
+        # Return the response directly as a dict
+        return {
+            "message": "Assignment and related content deleted successfully",
+            "details": {
+                "assignment_id": str(assignment_id)
+            }
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting the assignment: {str(e)}"
+        )
+        
+
+# Assignment Questions Endpoints
+@router.post("/{assignment_id}/questions", response_model=schemas.AssignmentQuestionInDB)
+def create_question(
+    *,
+    db: Session = Depends(deps.get_db),
+    assignment_id: UUID,
+    question_in: schemas.AssignmentQuestionCreate,
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Create new question for an assignment.
+    """
+    try:
+        # Verify assignment exists and teacher has access
+        assignment = crud.assignment.get_by_id(db=db, id=assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+
+        section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
+        if current_user.role != "teacher":
+            raise HTTPException(status_code=403, detail="Only teachers can create questions")
+
+        teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+        if not teacher or section.teacher_id != teacher.teacher_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to create questions for this assignment"
+            )
+
+        return crud.assignment_question.create(db=db, obj_in=question_in, assignment_id=assignment_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{assignment_id}/questions/batch", response_model=List[schemas.AssignmentQuestionInDB])
+def create_questions_batch(
+    *,
+    db: Session = Depends(deps.get_db),
+    assignment_id: UUID,
+    questions_in: List[schemas.AssignmentQuestionCreate],
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Create multiple questions for an assignment in a single request.
+    """
+    try:
+        # Verify assignment exists and teacher has access
+        assignment = crud.assignment.get_by_id(db=db, id=assignment_id)
+        if not assignment:
+            raise HTTPException(status_code=404, detail="Assignment not found")
+
+        section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
+        if current_user.role != "teacher":
+            raise HTTPException(status_code=403, detail="Only teachers can create questions")
+
+        teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+        if not teacher or section.teacher_id != teacher.teacher_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You don't have permission to create questions for this assignment"
+            )
+
+        return crud.assignment_question.create_multiple(
+            db=db, 
+            questions_in=questions_in, 
+            assignment_id=assignment_id
+        )
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/question/{question_id}", response_model=schemas.AssignmentQuestionInDB)
+def read_question(
+    question_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Get question by ID.
+    """
+    try:
+        question = crud.assignment_question.get_by_id(db=db, id=question_id)
+        if not question:
+            raise HTTPException(status_code=404, detail="Question not found")
+
+        # Verify user has access
+        assignment = crud.assignment.get_by_id(db=db, id=question.assignment_id)
+        section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
+        
+        if current_user.role == "teacher":
+            teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+            if not teacher or section.teacher_id != teacher.teacher_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="You don't have permission to view this question"
+                )
+
+        return question
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@router.put("/question/{question_id}", response_model=schemas.AssignmentQuestionInDB)
+def update_question(
+    *,
+    db: Session = Depends(deps.get_db),
+    question_id: UUID,
+    question_in: schemas.AssignmentQuestionUpdate,
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Update a question.
+    """
+    question = crud.assignment_question.get_by_id(db=db, id=question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    # Verify teacher has access
+    assignment = crud.assignment.get_by_id(db=db, id=question.assignment_id)
+    section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
     
-    if current_user.role != "admin":
+    if current_user.role != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can update questions")
+
+    teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+    if not teacher or section.teacher_id != teacher.teacher_id:
         raise HTTPException(
             status_code=403,
-            detail="You do not have permission to perform this action",
+            detail="You don't have permission to update this question"
         )
-        
-    assignment = crud.assignment.get_assignment_by_id(db, id=id)
-    if not assignment:
-        raise HTTPException(
-            status_code=404,
-            detail="The assignment with this ID does not exist in the system",
-        )
+
+    return crud.assignment_question.update(db=db, db_obj=question, obj_in=question_in)
+
+@router.delete("/question/{question_id}")
+def delete_question(
+    *,
+    db: Session = Depends(deps.get_db),
+    question_id: UUID,
+    current_user: models.User = Depends(deps.get_current_active_user)
+) -> Any:
+    """
+    Delete a question.
+    """
+    question = crud.assignment_question.get_by_id(db=db, id=question_id)
+    if not question:
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    # Verify teacher has access
+    assignment = crud.assignment.get_by_id(db=db, id=question.assignment_id)
+    section = crud.section.get_section_by_id(db=db, id=assignment.section_id)
     
-    try:
-        crud.assignment.delete_assignment(db, id=id)
-    except Exception as e:
-        print(f"Error deleting assignment: {str(e)}")
-        
-    return assignment
+    if current_user.role != "teacher":
+        raise HTTPException(status_code=403, detail="Only teachers can delete questions")
 
+    teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+    if not teacher or section.teacher_id != teacher.teacher_id:
+        raise HTTPException(
+            status_code=403,
+            detail="You don't have permission to delete this question"
+        )
 
+    crud.assignment_question.delete(db=db, id=question_id)
+    return {"message": "Question deleted successfully"}
