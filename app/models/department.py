@@ -22,5 +22,5 @@ class Department(Base):
     branch_id = Column(UUID(as_uuid=True), ForeignKey("branch.branch_id"))
     branch = relationship("Branch", back_populates="departments")
 
-    template_courses = relationship("TemplateCourse", back_populates="department")
+    template_courses = relationship("TemplateCourse", back_populates="department", cascade="all, delete")
     

@@ -25,12 +25,12 @@ class Student(Base):
     user = relationship("User", back_populates="student")
     
     
-    student_stats = relationship("StudentStats", back_populates="student")
+    student_stats = relationship("StudentStats", back_populates="student", cascade="all, delete")
     
-    inboxes = relationship("Inbox", back_populates="student")
+    inboxes = relationship("Inbox", back_populates="student", cascade="all, delete")
     
-    assignment_submissions = relationship("AssignmentSubmission", back_populates="student")
+    assignment_submissions = relationship("AssignmentSubmission", back_populates="student", cascade="all, delete")
     
-    notes = relationship("Notes", back_populates="student")
+    notes = relationship("Notes", back_populates="student", cascade="all, delete")
     
-    events = relationship("Events", back_populates="student")
+    events = relationship("Events", back_populates="student",  cascade="all, delete")
