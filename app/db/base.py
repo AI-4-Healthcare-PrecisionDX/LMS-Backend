@@ -9,3 +9,4 @@ from app.models.student import Student  # noqa
 from app.models.branch import Branch  # noqa
 from app.models.department import Department  # noqa
 from app.models.institution import Institution  # noqa
+from app.models.student_event import StudentEvent #noqa
