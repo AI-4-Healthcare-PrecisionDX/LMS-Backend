@@ -25,4 +25,4 @@ class Institution(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
-    branches = relationship("Branch", back_populates="institution")
+    branches = relationship("Branch", back_populates="institution", cascade="all, delete")

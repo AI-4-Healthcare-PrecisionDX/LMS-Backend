@@ -21,6 +21,6 @@ class Discussion(Base):
     section_id = Column(UUID(as_uuid=True), ForeignKey("section.section_id"))
     section = relationship("Section", back_populates="discussions")
     
-    discussion_messages = relationship("DiscussionMessage", back_populates="discussion")
+    discussion_messages = relationship("DiscussionMessage", back_populates="discussion", cascade="all, delete-orphan")
     
     

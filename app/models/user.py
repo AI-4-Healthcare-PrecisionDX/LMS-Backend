@@ -47,14 +47,14 @@ class User(Base):
         "Student", back_populates="user", uselist=False
     )  # One to One relationship
 
-    global_library_items = relationship("GlobalLibrary", back_populates="user")
+    global_library_items = relationship("GlobalLibrary", back_populates="user", cascade="all, delete")
 
-    course_materials = relationship("CourseMaterials", back_populates="user")
+    course_materials = relationship("CourseMaterials", back_populates="user", cascade="all, delete")
 
-    discussion_messages = relationship("DiscussionMessage", back_populates="user")
+    discussion_messages = relationship("DiscussionMessage", back_populates="user", cascade="all, delete")
 
     
-    discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="user")
+    discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="user", cascade="all, delete")
     
-    section_exclusive_contents = relationship("SectionExclusiveContent", back_populates="user")
+    section_exclusive_contents = relationship("SectionExclusiveContent", back_populates="user", cascade="all, delete")
     
