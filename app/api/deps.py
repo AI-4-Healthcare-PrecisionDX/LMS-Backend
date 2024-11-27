@@ -108,6 +108,20 @@ def get_current_active_superuser(
     return current_user
 
 
+def get_current_active_student_user(
+    current_user: models.User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+) -> models.Student:
+    if current_user.role != "student":
+        raise HTTPException(
+            status_code=403, detail="Only students can perform this action"
+        )
+
+    student = crud.user.get_student_by_user_id(db, id=current_user.user_id)
+
+    return student
+
+
 def check_branch(
     branch_id: UUID = Path(...),
     db: Session = Depends(get_db),
