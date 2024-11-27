@@ -40,3 +40,5 @@ class Section(Base):
     inboxes = relationship("Inbox", back_populates="section", cascade="all, delete")
     
     discussions = relationship("Discussion", back_populates="section", cascade="all, delete")
+    
+    announcements = relationship("Announcement", back_populates="section", cascade="all, delete")

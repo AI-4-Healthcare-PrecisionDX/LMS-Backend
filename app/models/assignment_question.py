@@ -30,3 +30,5 @@ class AssignmentQuestion(Base):
     
     assignment_id = Column(UUID(as_uuid=True), ForeignKey("assignment.assignment_id"))
     assignment = relationship("Assignment", back_populates="assignment_questions")
+    
+    assignment_submission_answer = relationship("AssignmentSubmissionAnswer", back_populates="question", cascade="all, delete")
