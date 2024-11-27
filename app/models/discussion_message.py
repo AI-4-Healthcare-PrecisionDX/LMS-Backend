@@ -29,5 +29,5 @@ class DiscussionMessage(Base):
     user = relationship("User", back_populates="discussion_messages")
     
     
-    discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="discussion_message")
+    discussion_reply_messages = relationship("DiscussionReplyMessage", back_populates="discussion_message", cascade="all, delete")
     

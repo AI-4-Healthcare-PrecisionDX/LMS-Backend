@@ -11,7 +11,7 @@ from app.models.section import Section as SectionModel
 from app.models.student_stats import StudentStats
 from app.models.teacher import Teacher
 from app.models.template_course import TemplateCourse
-from app.models.template_course_access import TemplateCourseAccess
+# from app.models.template_course_access import TemplateCourseAccess
 from app.models.section_exclusive_content import SectionExclusiveContent
 from app.schemas.section import (
     SectionCreate,

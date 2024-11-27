@@ -1,5 +1,7 @@
-from sqlalchemy import Boolean, Column, String, DateTime,ForeignKey
-from sqlalchemy.dialects.postgresql import UUID,ARRAY
+# app/models/student_event.py
+
+from sqlalchemy import Column, ForeignKey, String, DateTime, Boolean, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 import uuid
 import datetime
@@ -7,7 +9,8 @@ import datetime
 from app.db.base_class import Base
 
 
-class Events(Base):
+class StudentEvent(Base):
+    __tablename__ = "student_event"
     event_id = Column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -26,8 +29,7 @@ class Events(Base):
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     student_id = Column(UUID(as_uuid=True), ForeignKey("student.student_id"))
-    student = relationship("Student", back_populates="events")
-    
+    student = relationship("Student", back_populates="student_event")
     
 
     

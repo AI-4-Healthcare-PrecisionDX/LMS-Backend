@@ -27,9 +27,8 @@ class Assignment(Base):
     section_id = Column(UUID(as_uuid=True), ForeignKey("section.section_id"))
     section = relationship("Section", back_populates="assignments")
     
-    assignment_materials = relationship("AssignmentMaterial", back_populates="assignment")
+    assignment_materials = relationship("AssignmentMaterial", back_populates="assignment", cascade="all, delete")
     
-    assignment_questions = relationship("AssignmentQuestion", back_populates="assignment")
+    assignment_questions = relationship("AssignmentQuestion", back_populates="assignment", cascade="all, delete")
     
-    
-    assignment_submissions = relationship("AssignmentSubmission", back_populates="assignment")
+    assignment_submissions = relationship("AssignmentSubmission", back_populates="assignment", cascade="all, delete")

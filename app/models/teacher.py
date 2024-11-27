@@ -26,8 +26,5 @@ class Teacher(Base):
         "User", back_populates="teacher", uselist=False
     )  # One to One relationship
 
-    sections = relationship("Section", back_populates="teacher")
+    sections = relationship("Section", back_populates="teacher", cascade="all ,delete-orphan")
 
-    template_course_access = relationship(
-        "TemplateCourseAccess", back_populates="teacher"
-    )

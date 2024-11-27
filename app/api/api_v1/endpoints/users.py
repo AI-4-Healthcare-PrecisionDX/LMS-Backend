@@ -15,7 +15,6 @@ from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
 from google.cloud import storage
 import uuid
-from PyPDF2 import PdfReader
 from io import BytesIO
 
 

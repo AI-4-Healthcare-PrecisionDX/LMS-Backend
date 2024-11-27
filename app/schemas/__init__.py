@@ -84,3 +84,10 @@ from .discussion_reply_message import (
     DiscussionReplyMessageBase,
 )
 
+
+
+from .student_event import (
+    StudentEvent,
+    StudentEventCreate,
+    StudentEventUpdate,
+)
