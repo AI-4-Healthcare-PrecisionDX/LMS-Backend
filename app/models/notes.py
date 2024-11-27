@@ -25,4 +25,3 @@ class Notes(Base):
     
     student_id = Column(UUID(as_uuid=True), ForeignKey("student.student_id"))
     student = relationship("Student", back_populates="notes")
-    

@@ -12,3 +12,5 @@ from .crud_discussion import discussion
 from .crud_discussion_msg import discussion_message
 
 from .crud_discussion_rply_msg import discussion_reply_message
+
+from .crud_notes import notes

@@ -15,6 +15,7 @@ from app.api.api_v1.endpoints import (
     assignment,
     discussion_message,
     llm,
+    notes,
 )
 
 
@@ -40,3 +41,6 @@ api_router.include_router(
 # api_router.include_router(student.router, prefix="/student", tags=["student"])
 
 api_router.include_router(llm.router, prefix="/llm", tags=["llm"])
+
+
+api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
