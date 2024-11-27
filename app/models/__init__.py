@@ -22,3 +22,5 @@ from .assignment_submission import AssignmentSubmission
 from .student_event import StudentEvent
 
 from .notes import Notes
+from .announcement import Announcement
+from .assignment_submission_answer import AssignmentSubmissionAnswer

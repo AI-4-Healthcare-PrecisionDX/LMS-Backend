@@ -27,4 +27,5 @@ class Teacher(Base):
     )  # One to One relationship
 
     sections = relationship("Section", back_populates="teacher", cascade="all ,delete-orphan")
+    announcements = relationship("Announcement", back_populates="teacher", cascade="all, delete")
 
