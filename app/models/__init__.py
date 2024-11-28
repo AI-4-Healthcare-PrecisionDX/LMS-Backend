@@ -25,3 +25,6 @@ from .notes import Notes
 from .announcement import Announcement
 from .assignment_submission_answer import AssignmentSubmissionAnswer
 from .section_members import SectionMembers
+from .scenarios import Scenario
+from .scenario_patient import ScenarioPatient
+from .scenario_examination_finding import ScenarioExaminationFinding
