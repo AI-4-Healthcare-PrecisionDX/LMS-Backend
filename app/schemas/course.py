@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
 from .super_admin import Department
+from .library import Library
 # class TeacherAccess(BaseModel):
 #     teacher_id: UUID
     
@@ -11,7 +12,8 @@ from .super_admin import Department
 #         from_attributes = True
 
 class CourseMaterial(BaseModel):
-    library_item_id: UUID
+    library_item : Optional[Library] = None
+    
     
     class Config:
         from_attributes = True

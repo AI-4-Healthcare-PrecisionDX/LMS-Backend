@@ -24,3 +24,4 @@ from .student_event import StudentEvent
 from .notes import Notes
 from .announcement import Announcement
 from .assignment_submission_answer import AssignmentSubmissionAnswer
+from .section_members import SectionMembers

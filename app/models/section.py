@@ -42,3 +42,5 @@ class Section(Base):
     discussions = relationship("Discussion", back_populates="section", cascade="all, delete")
     
     announcements = relationship("Announcement", back_populates="section", cascade="all, delete")
+    
+    section_members = relationship("SectionMembers", back_populates="section", cascade="all, delete")

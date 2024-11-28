@@ -37,3 +37,5 @@ class Student(Base):
     notes = relationship("Notes", back_populates="student", cascade="all, delete")
     
     assignment_submission_answers = relationship("AssignmentSubmissionAnswer", back_populates="student", cascade="all, delete")
+    
+    section_members = relationship("SectionMembers", back_populates="student", cascade="all, delete")
