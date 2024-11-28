@@ -24,3 +24,5 @@ class Department(Base):
 
     template_courses = relationship("TemplateCourse", back_populates="department", cascade="all, delete")
     
+    scenarios = relationship("Scenario", back_populates="department", cascade="all, delete")
+    
