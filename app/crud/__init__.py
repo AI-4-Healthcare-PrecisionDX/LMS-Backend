@@ -17,3 +17,4 @@ from .crud_notes import notes
 
 from .crud_student_event import student_event
 
+from .crud_announcement import announcement
