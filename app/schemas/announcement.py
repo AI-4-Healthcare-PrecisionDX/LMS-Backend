@@ -19,8 +19,6 @@ class AnnouncementBase(BaseModel):
 
     
 class AnnouncementCreate(AnnouncementBase):
-    section_id: UUID
-    teacher_id: UUID
     pass
 
 class AnnouncementUpdate(BaseModel):
@@ -37,7 +35,7 @@ class AnnouncementInDB(AnnouncementBase):
     class Config:
         from_attributes = True
 
-class AnnouncementWithDetails(AnnouncementInDB):
+class Announcement(AnnouncementInDB):
 
     class Config:
         from_attributes = True
