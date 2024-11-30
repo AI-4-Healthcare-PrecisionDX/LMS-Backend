@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import datetime
 from .section import SectionBase, TeacherInfo
 
-# First, let's create a minimal section info class for announcements
+
 class SectionInfo(BaseModel):
     section_id: UUID
     section_name: str
@@ -37,10 +37,7 @@ class AnnouncementInDB(AnnouncementBase):
     class Config:
         from_attributes = True
 
-# You might also want a more detailed response model
 class AnnouncementWithDetails(AnnouncementInDB):
-    """
-    A more detailed announcement model that includes full section and teacher information
-    """
+
     class Config:
         from_attributes = True
