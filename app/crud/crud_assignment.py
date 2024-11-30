@@ -2,7 +2,7 @@
 from typing import Any, Dict, Optional, List
 from sqlalchemy.orm import Session, joinedload
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime,timedelta,timezone    
 from app.models.assignment_material import AssignmentMaterial
 from app.crud.base import CRUDBase
 from app.models.assignment import Assignment
@@ -38,8 +38,11 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
     def create_assignment(self, db: Session, *, obj_in: AssignmentCreate) -> Assignment:
         try:
             
-            start_time = datetime.strptime(str(obj_in.start_time), "%Y-%m-%dT%H:%M:%S")
-            deadline = datetime.strptime(str(obj_in.deadline), "%Y-%m-%dT%H:%M:%S")
+# Parse times and make them timezone-aware UTC
+            start_time = datetime.strptime(str(obj_in.start_time), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            deadline = datetime.strptime(str(obj_in.deadline), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+
+
             # Validate and create assignment without relationships first
             db_obj = Assignment(
                 assignment_type=obj_in.assignment_type,
