@@ -16,7 +16,8 @@ from app.api.api_v1.endpoints import (
     discussion_message,
     llm,
     notes,
-    student_event
+    student_event,
+    clinical_practice,
 )
 
 
@@ -42,9 +43,16 @@ api_router.include_router(
 # api_router.include_router(student.router, prefix="/student", tags=["student"])
 
 
-api_router.include_router(student_event.router, prefix="/student-event", tags=["student-event"])
+api_router.include_router(
+    student_event.router, prefix="/student-event", tags=["student-event"]
+)
 
 api_router.include_router(llm.router, prefix="/llm", tags=["llm"])
 
 
 api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
+
+
+api_router.include_router(
+    clinical_practice.router, prefix="/clinical-practice", tags=["clinical-practice"]
+)

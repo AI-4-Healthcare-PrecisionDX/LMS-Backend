@@ -1,4 +1,4 @@
-#app/api/api_v1/endpoints/__init__.py
+# app/api/api_v1/endpoints/__init__.py
 
 from .users import router as users_router
 from .super_admin import router as super_admin_router
@@ -11,3 +11,4 @@ from .assignment import router as assignment_router
 
 from .student_event import router as student_event_router
 
+from .clinical_practice import router as clinical_practice_router
