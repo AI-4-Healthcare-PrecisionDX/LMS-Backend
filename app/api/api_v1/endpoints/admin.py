@@ -344,21 +344,117 @@ def update_student(
 
 
 
+# Create a new department
+@router.post("/create_department", response_model=schemas.Department)
+def create_department(
+    *,
+    db: Session = Depends(deps.get_db),
+    department_in: schemas.DepartmentCreate,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Create new department.
+    """
+    
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+    
+    try:
+        department = crud.department.create_department(db, obj_in=department_in, branch_id=current_user.branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the department",
+        )
+    return department
+
+
+# Get the list of departments
 @router.get("/departments", response_model=List[schemas.Department])
-def get_departments(
+def read_departments(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+    current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Retrieve all departments.
+    Retrieve departments.
     """
+    
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+        
     try:
-        departments = crud.department.get_departments_by_branch(db=db, branch_id=current_user.branch_id)
+        departments = crud.department.get_departments_by_branch(db, branch_id=current_user.branch_id)
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail="An error occurred while retrieving the departments",
         )
     return departments
+
+
+# Get a department by ID
+@router.get("/departments/{department_id}", response_model=schemas.Department)
+def read_department_by_id(
+    department_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Get a specific department by ID.
+    """
+    
+    if current_user.role != "admin" :
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+        
+    try:
+        department = crud.department.get_department_by_id(db, department_id=department_id, branch_id= current_user.branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the department",
+        )
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    return department
+
+
+# Update a department
+@router.put("/departments/{department_id}", response_model=schemas.Department)
+def update_department(
+    *,
+    db: Session = Depends(deps.get_db),
+    department_id: str,
+    department_in: schemas.DepartmentUpdate,
+    current_user: models.User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Update a department.
+    """
+    
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+        
+        
+    try:
+        department = crud.department.get_department_by_id(db, department_id=department_id, branch_id= current_user.branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the department",
+        )
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    department = crud.department.update_department(
+        db, db_obj=department, obj_in=department_in
+    )
+    return department
