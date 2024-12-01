@@ -53,6 +53,7 @@ class Settings(BaseSettings):
 
     OPENAI_API_KEY: str
     OPENAI_MODEL: str
+    OPENAI_MODEL_CLINICAL_PRACTICE: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

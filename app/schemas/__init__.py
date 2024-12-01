@@ -1,5 +1,3 @@
-# app/schemas/__init__.py
-
 from .user import (
     User,
     UserCreate,
@@ -52,7 +50,6 @@ from .library import (
 )
 
 
-
 from .assignment import (
     AssignmentBase,
     AssignmentCreate,
@@ -64,7 +61,7 @@ from .assignment import (
     AssignmentQuestionInDB,
     AssignmentMaterialBase,
     AssignmentMaterialInDB,
-    DeleteAssignmentResponse
+    DeleteAssignmentResponse,
 )
 
 from .discussion import (
@@ -85,9 +82,33 @@ from .discussion_reply_message import (
 )
 
 
-
 from .student_event import (
     StudentEvent,
     StudentEventCreate,
     StudentEventUpdate,
+)
+
+
+from .scenario import (
+    ScenarioBase,
+    ScenarioCreate,
+    ScenarioUpdate,
+    ScenarioInDBBase,
+    Scenario,
+    ScenarioExaminationFindingBase,
+    ScenarioExaminationFindingCreate,
+    ScenarioExaminationFindingUpdate,
+    ScenarioExaminationFindingInDBBase,
+    ScenarioExaminationFinding,
+    ScenarioData,
+    ScenarioThreadBase,
+    ScenarioThreadCreate,
+    ScenarioThreadUpdate,
+    ScenarioThreadInDBBase,
+    ScenarioThread,
+    ScenarioThreadMessageBase,
+    ScenarioThreadMessageCreate,
+    ScenarioThreadMessageUpdate,
+    ScenarioThreadInDBBase,
+    ScenarioThread,
 )

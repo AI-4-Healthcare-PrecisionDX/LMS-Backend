@@ -1,5 +1,5 @@
-#app/models/student.py
-from sqlalchemy import  Column, ForeignKey, String, DateTime, Boolean
+# app/models/student.py
+from sqlalchemy import Column, ForeignKey, String, DateTime, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import relationship
@@ -23,19 +23,31 @@ class Student(Base):
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
     user = relationship("User", back_populates="student")
-    
-    
-    student_stats = relationship("StudentStats", back_populates="student", cascade="all, delete")
-    
+
+    student_stats = relationship(
+        "StudentStats", back_populates="student", cascade="all, delete"
+    )
+
     inboxes = relationship("Inbox", back_populates="student", cascade="all, delete")
-    
 
-    student_event = relationship("StudentEvent", back_populates="student", cascade="all, delete")
+    student_event = relationship(
+        "StudentEvent", back_populates="student", cascade="all, delete"
+    )
 
-    assignment_submissions = relationship("AssignmentSubmission", back_populates="student", cascade="all, delete")
-    
+    assignment_submissions = relationship(
+        "AssignmentSubmission", back_populates="student", cascade="all, delete"
+    )
+
     notes = relationship("Notes", back_populates="student", cascade="all, delete")
-    
-    assignment_submission_answers = relationship("AssignmentSubmissionAnswer", back_populates="student", cascade="all, delete")
-    
-    section_members = relationship("SectionMembers", back_populates="student", cascade="all, delete")
+
+    assignment_submission_answers = relationship(
+        "AssignmentSubmissionAnswer", back_populates="student", cascade="all, delete"
+    )
+
+    section_members = relationship(
+        "SectionMembers", back_populates="student", cascade="all, delete"
+    )
+
+    scenario_threads = relationship(
+        "ScenarioThread", back_populates="student", cascade="all, delete"
+    )
