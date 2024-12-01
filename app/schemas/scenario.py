@@ -4,13 +4,13 @@ import uuid
 
 
 class ScenarioBase(BaseModel):
-    scenario_title: Optional[str]
-    patient_name: Optional[str]
-    patient_age: Optional[str]
-    patient_gender: Optional[str]
-    patient_chief_complaint: Optional[str]
-    detailed_description: Optional[str]
-    conversation_example: Optional[list[Dict]]
+    scenario_title: Optional[str] = None
+    patient_name: Optional[str] = None
+    patient_age: Optional[str] = None
+    patient_gender: Optional[str]= None
+    patient_chief_complaint: Optional[str] = None
+    detailed_description: Optional[str]= None
+    conversation_example: Optional[list[Dict]]= None
 
 
 class ScenarioCreate(ScenarioBase):
@@ -25,7 +25,9 @@ class ScenarioUpdate(ScenarioBase):
 
 
 class ScenarioInDBBase(ScenarioBase):
-    scenario_id: Optional[uuid.UUID]
+    scenario_id: uuid.UUID
+    department_id: uuid.UUID
+    branch_id: uuid.UUID
 
     class Config:
         orm_mode = True
@@ -36,11 +38,11 @@ class Scenario(ScenarioInDBBase):
 
 
 class ScenarioExaminationFindingBase(BaseModel):
-    vital_signs: Optional[str]
-    general_appearance: Optional[str]
-    cardiovascular_findings: Optional[str]
-    lungs_findings: Optional[str]
-    additional_findings: Optional[str]
+    vital_signs: Optional[str] = None
+    general_appearance: Optional[str]= None
+    cardiovascular_findings: Optional[str] = None
+    lungs_findings: Optional[str] =  None
+    additional_findings: Optional[str]= None
 
 
 class ScenarioExaminationFindingCreate(ScenarioExaminationFindingBase):
@@ -52,7 +54,7 @@ class ScenarioExaminationFindingUpdate(ScenarioExaminationFindingBase):
 
 
 class ScenarioExaminationFindingInDBBase(ScenarioExaminationFindingBase):
-    scenario_examination_finding_id: Optional[uuid.UUID]
+    scenario_examination_finding_id: uuid.UUID
 
     class Config:
         orm_mode = True
@@ -62,9 +64,13 @@ class ScenarioExaminationFinding(ScenarioExaminationFindingInDBBase):
     pass
 
 
+class ScenarioWithExaminationFinding(ScenarioInDBBase):
+    scenario_examination_findings: ScenarioExaminationFinding
+
 class ScenarioData(BaseModel):
     scenario: ScenarioCreate
     scenario_examination_findings: ScenarioExaminationFindingCreate
+    department_id: uuid.UUID
 
 
 class ScenarioThreadBase(BaseModel):
@@ -77,6 +83,7 @@ class ScenarioThreadCreate(ScenarioThreadBase):
 
 class ScenarioThreadUpdate(ScenarioThreadBase):
     pass
+
 
 
 class ScenarioThreadInDBBase(ScenarioThreadBase):
