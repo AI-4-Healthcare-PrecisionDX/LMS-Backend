@@ -11,6 +11,7 @@ from app.models.section import Section as SectionModel
 from app.models.student_stats import StudentStats
 from app.models.teacher import Teacher
 from app.models.template_course import TemplateCourse
+from app.models.section_members import SectionMembers
 # from app.models.template_course_access import TemplateCourseAccess
 from app.models.section_exclusive_content import SectionExclusiveContent
 from app.schemas.section import (
@@ -21,6 +22,7 @@ from app.schemas.section import (
     Section as SectionSchema
 )
 from app.crud.crud_user import user
+from sqlalchemy.exc import SQLAlchemyError
 
 class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
     def get_multi(self, db: Session, *, skip=0, limit=100) -> List[SectionModel]:
@@ -37,14 +39,14 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
             .all()
         )
 
-    def get_teacher_course_access(self, db: Session, *, teacher_id: UUID) -> List[UUID]:
-        """Get all course IDs that the teacher has access to"""
-        course_access = (
-            db.query(TemplateCourseAccess.template_course_id)
-            .filter(TemplateCourseAccess.teacher_id == teacher_id)
-            .all()
-        )
-        return [access[0] for access in course_access]
+    # def get_teacher_course_access(self, db: Session, *, teacher_id: UUID) -> List[UUID]:
+    #     """Get all course IDs that the teacher has access to"""
+    #     course_access = (
+    #         db.query(TemplateCourseAccess.template_course_id)
+    #         .filter(TemplateCourseAccess.teacher_id == teacher_id)
+    #         .all()
+    #     )
+    #     return [access[0] for access in course_access]
 
     def generate_section_code(self, db: Session, template_course_id: UUID) -> str:
         """Generate a unique section code based on course"""
@@ -271,5 +273,66 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
             )
             .all()
         )
+        
+    def join_section(self, db: Session, *, section_code: str, student_id: UUID) -> SectionModel:
+        """Join a section"""
+        try:
+            section = db.query(SectionModel).filter(SectionModel.section_code == section_code).first()
+            if not section:
+                raise ValueError("Section not found")
+            
+            # Check if student is already in the section
+            existing_student = (
+            db.query(SectionMembers)
+            .filter(
+                SectionMembers.student_id == student_id,
+                SectionMembers.section_id == section.section_id
+            )
+            .first()
+            )
+            if existing_student:
+                raise ValueError("Student is already in the section")
+            
+            section_member = SectionMembers(
+            section_id=section.section_id,
+            student_id=student_id
+            )
+            
+            db.add(section_member)
+            
+            # Calculate the new student count
+            student_count = db.query(func.count(SectionMembers.student_id)).filter(SectionMembers.section_id == section.section_id).scalar()
+            section.student_count = student_count + 1
+            
+    
+            
+            db.commit()
+            db.refresh(section_member)
+            db.refresh(section)
+            
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise e
+        
+        return section
+    
+    
+    def get_sections_for_student(self, db: Session, *, student_id: UUID) -> List[SectionModel]:
+        """Get all sections for a student"""
+        try:
+            return (
+            db.query(SectionModel)
+            .join(SectionMembers, SectionModel.section_id == SectionMembers.section_id)
+            .filter(SectionMembers.student_id == student_id)
+            .options(
+                joinedload(SectionModel.teacher).joinedload(Teacher.user),
+                joinedload(SectionModel.template_course),
+                joinedload(SectionModel.section_exclusive_contents).joinedload(SectionExclusiveContent.library_item)
+            )
+            .all()
+            )
+        except SQLAlchemyError as e:
+            db.rollback()
+            raise e
 
 section = CRUDSection(SectionModel)

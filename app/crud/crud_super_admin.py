@@ -101,8 +101,8 @@ class CRUDBranch(CRUDBase[Branch, BranchCreate, BranchUpdate]):
 
 
 class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
-    def get_department_by_id(self, db: Session, *, id: UUID) -> Optional[Department]:
-        return db.query(Department).filter(Department.department_id == id).first()
+    def get_department_by_id(self, db: Session, *, department_id: UUID, branch_id: UUID) -> Optional[Department]:
+        return db.query(Department).filter(Department.department_id == department_id,Department.branch_id==branch_id).first()
 
     def get_department_by_email(
         self, db: Session, *, email: str

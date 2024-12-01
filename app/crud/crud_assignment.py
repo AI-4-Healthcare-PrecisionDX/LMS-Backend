@@ -38,9 +38,11 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
     def create_assignment(self, db: Session, *, obj_in: AssignmentCreate) -> Assignment:
         try:
             
-# Parse times and make them timezone-aware UTC
-            start_time = datetime.strptime(str(obj_in.start_time), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-            deadline = datetime.strptime(str(obj_in.deadline), "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            start_time_str = str(obj_in.start_time).split('+')[0]
+            deadline_str = str(obj_in.deadline).split('+')[0]
+            
+            start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+            deadline = datetime.strptime(deadline_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
 
 
             # Validate and create assignment without relationships first
