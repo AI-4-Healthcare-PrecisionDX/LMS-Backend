@@ -4,6 +4,8 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.chat_history import BaseChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langfuse.callback import CallbackHandler
+from typing import AsyncGenerator
+
 from app.prompt import ClinicalPracticePrompt
 from app.core.config import settings
 
@@ -46,6 +48,7 @@ class ClinicalPracticeLLM:
             api_key=settings.OPENAI_API_KEY,
             model=settings.OPENAI_MODEL_CLINICAL_PRACTICE,
             temperature=0,
+            streaming=True,
         )
         self.memory = ChatMessageHistory(session_id)
         self.prompt = ClinicalPracticePrompt().create_prompt(
@@ -53,7 +56,9 @@ class ClinicalPracticeLLM:
         )
         self.chain = self.prompt | self.llm
 
-    def generate_response(self, question: str, thread_messages: list) -> str:
+    async def generate_response_stream(
+        self, question: str, thread_messages: list
+    ) -> AsyncGenerator[str, None]:
         try:
             if thread_messages:
                 self.memory.add_messages(thread_messages)
@@ -70,13 +75,17 @@ class ClinicalPracticeLLM:
 
             langfuse_handler = CallbackHandler()
 
-            response = with_history.invoke(
+            async for chunk in with_history.astream(
                 {"messages": [HumanMessage(content=question)]},
                 config={
                     "callbacks": [langfuse_handler],
                 },
-            )
-            return response.content
+            ):
+                if hasattr(chunk, "content"):
+                    yield chunk.content
+                else:
+                    yield str(chunk)
+
         except Exception as e:
             print(f"Error generating response: {str(e)}")
             raise

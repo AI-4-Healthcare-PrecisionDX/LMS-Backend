@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
+from typing import AsyncGenerator
 
 
 from app.api import deps
@@ -125,34 +127,42 @@ async def create_thread_message(
             )
         )
 
-        # Initialize chat and generate response
+        # Initialize chat
         chat = ClinicalPracticeLLM(
             session_id=str(thread_id),
             scenario=scenario_data,
             scenario_examination_findings=scenario_examination_findings_data,
         )
-        response = chat.generate_response(
-            question=thread_message_in.content, thread_messages=thread_messages
-        )
 
-        # Create the doctor's message
-        doctor_message = crud_scenario.scenario_thread_message.create_by_thread_id(
-            db=db,
-            scenario_thread_id=thread_id,
-            obj_in=thread_message_in,
-            role="doctor",
-        )
+        async def stream_response() -> AsyncGenerator[str, None]:
+            full_response = ""
+            async for chunk in chat.generate_response_stream(
+                question=thread_message_in.content, thread_messages=thread_messages
+            ):
+                full_response += chunk
+                yield f"data: {chunk}\n\n"
 
-        # Create the patient's response message
-        patient_message_in = scenario.ScenarioThreadMessageCreate(content=response)
-        patient_message = crud_scenario.scenario_thread_message.create_by_thread_id(
-            db=db,
-            scenario_thread_id=thread_id,
-            obj_in=patient_message_in,
-            role="patient",
-        )
+            # Create the doctor's message
+            doctor_message = crud_scenario.scenario_thread_message.create_by_thread_id(
+                db=db,
+                scenario_thread_id=thread_id,
+                obj_in=thread_message_in,
+                role="doctor",
+            )
+            # Create the patient's response message after receiving full response
+            patient_message_in = scenario.ScenarioThreadMessageCreate(
+                content=full_response
+            )
+            patient_message = crud_scenario.scenario_thread_message.create_by_thread_id(
+                db=db,
+                scenario_thread_id=thread_id,
+                obj_in=patient_message_in,
+                role="patient",
+            )
 
-        return {"response": response}
+            yield "data: [DONE]\n\n"
+
+        return StreamingResponse(stream_response(), media_type="text/event-stream")
 
     except HTTPException:
         raise
