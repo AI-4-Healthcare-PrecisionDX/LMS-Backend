@@ -54,17 +54,3 @@ def create_questions(
     # print(questions)
 
     return {"questions": questions, "metadata": metadata}
-
-
-@router.post("/{thread_id}/clinical_practice")
-def create_clinical_practice_questions(
-    db: Session = Depends(deps.get_db),
-    user_question: str = Form(...),
-    current_user: models.User = Depends(deps.get_current_active_user),
-):
-
-    llm = ClinicalPracticeLLM()
-
-    response = llm.generate_response(user_question)
-
-    return {"response": response}
