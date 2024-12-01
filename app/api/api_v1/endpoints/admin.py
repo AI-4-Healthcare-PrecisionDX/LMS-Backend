@@ -458,3 +458,43 @@ def update_department(
         db, db_obj=department, obj_in=department_in
     )
     return department
+
+
+
+@router.post("/create_scenario")
+def create_scenario(
+    scenario_in: schemas.scenario.ScenarioData,
+    db=Depends(deps.get_db),
+    current_user=Depends(deps.get_current_active_user),
+):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+        
+    # Get the scenario from scene_in
+    scenario = scenario_in.scenario
+    # Get the scenario_examination_findings from scene_in
+    scenario_examination_findings = scenario_in.scenario_examination_findings
+
+    # Create the scenario
+    scenario = crud.crud_scenario.scenario.create_scenario(db=db, obj_in=scenario, department_id=scenario_in.department_id, branch_id=current_user.branch_id)
+    
+    # Create the scenario_examination_findings
+    scenario_examination_findings = crud.crud_scenario.scenario_examination_finding.create_scenario_examination_findings(
+        db=db, obj_in=scenario_examination_findings, scenario_id=scenario.scenario_id
+    )
+
+    return {"detail": "Scenario created successfully"}
+
+
+# Get all scenarios
+@router.get("/scenarios", response_model=List[schemas.scenario.ScenarioWithExaminationFinding])
+def get_all_scenarios(
+    db=Depends(deps.get_db),
+    current_user=Depends(deps.get_current_active_user),
+):
+    scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(db=db, branch_id=current_user.branch_id)
+
+    
+    return scenarios

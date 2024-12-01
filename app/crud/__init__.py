@@ -18,3 +18,5 @@ from .crud_notes import notes
 from .crud_student_event import student_event
 
 from .crud_announcement import announcement
+
+from .crud_scenario import scenario, scenario_examination_finding, scenario_thread, scenario_thread_message
