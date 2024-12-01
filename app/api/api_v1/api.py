@@ -18,6 +18,7 @@ from app.api.api_v1.endpoints import (
     llm,
     notes,
     student_event,
+    student
 )
 
 
@@ -51,3 +52,5 @@ api_router.include_router(llm.router, prefix="/llm", tags=["llm"])
 api_router.include_router(notes.router, prefix="/notes", tags=["notes"])
 
 api_router.include_router(announcement.router, prefix="/announcement", tags=["announcement"])
+
+api_router.include_router(student.router, prefix="/student", tags=["student"])
