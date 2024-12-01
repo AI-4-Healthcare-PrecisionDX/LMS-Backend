@@ -32,3 +32,4 @@ class Branch(Base):
     departments = relationship("Department", back_populates="branch")
     users = relationship("User", back_populates="branch")
     template_courses = relationship("TemplateCourse", back_populates="branch")
+    scenarios = relationship("Scenario", back_populates="branch")

@@ -29,9 +29,12 @@ class Scenario(Base):
 
     department_id = Column(UUID(as_uuid=True), ForeignKey("department.department_id"))
     department = relationship("Department", back_populates="scenarios")
+    
+    branch_id = Column(UUID(as_uuid=True), ForeignKey("branch.branch_id"))
+    branch = relationship("Branch", back_populates="scenarios")
 
     scenario_examination_findings = relationship(
-        "ScenarioExaminationFinding", back_populates="scenario", cascade="all, delete"
+        "ScenarioExaminationFinding", back_populates="scenario", cascade="all, delete", uselist=False
     )
 
     scenario_threads = relationship(

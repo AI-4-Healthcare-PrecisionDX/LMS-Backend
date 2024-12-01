@@ -13,49 +13,13 @@ from app.llm import ClinicalPracticeLLM
 router = APIRouter()
 
 
-@router.post("/create_scenario")
-def create_scenario(
-    scenario_in: scenario.ScenarioData,
-    db=Depends(deps.get_db),
-    # current_teacher=Depends(deps.get_current_active_teacher_user),
-):
-    # Get the scenario from scene_in
-    scenario = scenario_in.scenario
-    # Get the scenario_examination_findings from scene_in
-    scenario_examination_findings = scenario_in.scenario_examination_findings
-
-    # Create the scenario
-    scenario = crud_scenario.scenario.create(db=db, obj_in=scenario)
-    # Create the scenario_examination_findings
-    scenario_examination_findings = crud_scenario.scenario_examination_finding.create(
-        db=db, obj_in=scenario_examination_findings
-    )
-
-    return {"detail": "Scenario created successfully"}
-
-
-# Get all scenarios
-@router.get("/scenarios")
-def get_all_scenarios(
-    db=Depends(deps.get_db),
-    # current_teacher=Depends(deps.get_current_active_teacher_user),
-):
-    scenarios = crud_scenario.scenario.get_multi(db=db)
-    scenario_examination_findings = (
-        crud_scenario.scenario_examination_finding.get_multi(db=db)
-    )
-    return {
-        "scenarios": scenarios,
-        "scenario_examination_findings": scenario_examination_findings,
-    }
-
 
 # Create a thread for a scenario
 @router.post("/{scenario_id}", response_model=scenario.ScenarioThread)
 def create_scenario_thread(
     scenario_id: UUID,
     db=Depends(deps.get_db),
-    # current_student=Depends(deps.get_current_active_student_user),
+    current_student=Depends(deps.get_current_active_student_user),
 ):
     # Check if the scenario exists
     scenario = crud_scenario.scenario.get_by_id(db=db, scenario_id=scenario_id)
@@ -66,7 +30,7 @@ def create_scenario_thread(
 
     # Create the thread
     scenario_thread = crud_scenario.scenario_thread.create_by_scenario_id(
-        db=db, scenario_id=scenario_id
+        db=db, scenario_id=scenario_id, student_id=current_student.student_id
     )
 
     return scenario_thread
