@@ -11,3 +11,4 @@ from .assignment import router as assignment_router
 
 from .student_event import router as student_event_router
 from .announcement import router as announcement_router
+from .student import router as student_router

@@ -305,7 +305,7 @@ def read_departments(
     Retrieve departments.
     """
     
-    if current_user.role != "admin" and current_user.role != "superuser":
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=403, detail="Only admins and superadmins can perform this action"
         )
