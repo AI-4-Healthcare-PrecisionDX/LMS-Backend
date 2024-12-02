@@ -38,12 +38,6 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
     def create_assignment(self, db: Session, *, obj_in: AssignmentCreate) -> Assignment:
         try:
             
-            start_time_str = str(obj_in.start_time).split('+')[0]
-            deadline_str = str(obj_in.deadline).split('+')[0]
-            
-            start_time = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-            deadline = datetime.strptime(deadline_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
-
 
             # Validate and create assignment without relationships first
             db_obj = Assignment(
@@ -52,8 +46,8 @@ class CRUDAssignment(CRUDBase[Assignment, AssignmentCreate, AssignmentUpdate]):
                 assignment_description=obj_in.assignment_description,
                 number_of_questions=obj_in.number_of_questions,
                 total_marks=obj_in.total_marks,
-                start_time=start_time,
-                deadline=deadline,
+                start_time=obj_in.start_time,
+                deadline=obj_in.deadline,
                 section_id=obj_in.section_id,
                 created_at=datetime.utcnow(),
                 updated_at=datetime.utcnow(),
