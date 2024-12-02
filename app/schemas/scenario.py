@@ -36,11 +36,12 @@ class Scenario(ScenarioInDBBase):
 
 
 class ScenarioForStudent(BaseModel):
-    scenario_id: uuid.UUID
-    scenario_title: str
-    patient_name: str
-    patient_age: str
-    patient_chief_complaint: str
+    scenario_id: Optional[uuid.UUID]
+    scenario_title: Optional[str]
+    patient_name: Optional[str]
+    patient_age: Optional[str]
+    patient_gender: Optional[str]
+    patient_chief_complaint: Optional[str]
 
 
 class ScenarioExaminationFindingBase(BaseModel):
