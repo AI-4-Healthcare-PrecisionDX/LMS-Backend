@@ -38,7 +38,9 @@ def create_scenario_thread(
 
 
 # Get thread messages by thread id
-@router.get("/thread/{thread_id}", response_model=list[scenario.ScenarioThreadMessage])
+@router.get(
+    "/thread/{thread_id}/messages", response_model=list[scenario.ScenarioThreadMessage]
+)
 def get_thread_by_id(
     thread_id: UUID,
     db: Session = Depends(deps.get_db),
@@ -61,11 +63,38 @@ def get_thread_by_id(
     thread_messages = crud_scenario.scenario_thread_message.get_multi_by_thread_id(
         db=db, scenario_thread_id=thread_id
     )
+    if not thread_messages:
+        return []
 
     return thread_messages
 
 
-@router.post("/thread/{thread_id}")
+# Get case details
+@router.get("/thread/{thread_id}", response_model=scenario.ScenarioForStudent)
+def get_case_details(
+    thread_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_student=Depends(deps.get_current_active_student_user),
+):
+    thread = crud_scenario.scenario_thread.get_by_id(
+        db=db, scenario_thread_id=thread_id
+    )
+    if not thread:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
+        )
+
+    # Get the scenario using thread id
+    scenario = crud_scenario.scenario.get_by_id(db=db, scenario_id=thread.scenario_id)
+    if not scenario:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found"
+        )
+
+    return scenario
+
+
+@router.post("/thread/{thread_id}/message")
 async def create_thread_message(
     thread_id: UUID,
     thread_message_in: scenario.ScenarioThreadMessageCreate,
@@ -166,6 +195,8 @@ def read_departments(
         departments = department.get_departments_for_student(
             db, user_id=current_user.user_id, skip=skip, limit=limit
         )
+        if not departments:
+            return []
     except Exception as e:
         print(e)
         raise HTTPException(
@@ -199,6 +230,8 @@ def read_department_scenarios(
         scenarios = crud_scenario.scenario.get_scenario_by_department_id(
             db, department_id=department_id, skip=0, limit=100
         )
+        if not scenarios:
+            return []
     except Exception as e:
         print(e)
         raise HTTPException(
