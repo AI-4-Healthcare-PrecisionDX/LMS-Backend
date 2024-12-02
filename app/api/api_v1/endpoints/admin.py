@@ -514,13 +514,19 @@ def get_all_scenarios(
     db=Depends(deps.get_db),
     current_user=Depends(deps.get_current_active_user),
 ):
-    scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(
-        db=db, branch_id=current_user.branch_id
-    )
-    return [
-        schemas.scenario.ScenarioWithExaminationFinding(
-            scenario=scenario.__dict__,
-            scenario_examination_findings=scenario.scenario_examination_findings.__dict__,
+    try:
+        scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(
+            db=db, branch_id=current_user.branch_id
         )
-        for scenario in scenarios
-    ]
+        return [
+            schemas.scenario.ScenarioWithExaminationFinding(
+                scenario=scenario.__dict__,
+                scenario_examination_findings=scenario.scenario_examination_findings.__dict__,
+            )
+            for scenario in scenarios
+        ]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the scenarios",
+        )
