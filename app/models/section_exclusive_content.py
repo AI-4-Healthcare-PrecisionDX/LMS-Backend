@@ -25,6 +25,9 @@ class SectionExclusiveContent(Base):
     
     description = Column(String, nullable=True)
     
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
     user = relationship("User", back_populates="section_exclusive_contents")
     

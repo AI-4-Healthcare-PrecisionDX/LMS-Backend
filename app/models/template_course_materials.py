@@ -23,6 +23,9 @@ class CourseMaterials(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.user_id"))
     user = relationship("User", back_populates="course_materials")
     
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
     template_course_id = Column(UUID(as_uuid=True), ForeignKey("template_course.template_course_id"))
     template_course = relationship("TemplateCourse", back_populates="course_materials")
     

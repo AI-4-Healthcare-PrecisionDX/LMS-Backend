@@ -13,6 +13,8 @@ from .library import Library
 
 class CourseMaterial(BaseModel):
     library_item : Optional[Library] = None
+    created_at: datetime
+    updated_at: datetime
     
     
     class Config:

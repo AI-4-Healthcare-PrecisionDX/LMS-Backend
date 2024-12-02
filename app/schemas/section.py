@@ -44,6 +44,8 @@ class SectionExclusiveContentInDB(SectionExclusiveContentBase):
     title : Optional[str] = None
     description: Optional[str] = None
     section_exclusive_content_id: UUID
+    created_at: datetime
+    updated_at: datetime
     user_id: UUID
     library_item: Optional[Library] = None
 
@@ -62,6 +64,8 @@ class SectionExclusiveContentByCourseTeacherCreate(SectionExclusiveContentByCour
 class SectionExclusiveContentByCourseTeacherInDB(SectionExclusiveContentByCourseTeacher):
     title : Optional[str] = None
     description: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
     section_exclusive_content_id: UUID
     user_id: UUID
     library_item: Optional[Library] = None
