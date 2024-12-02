@@ -491,9 +491,17 @@ def create_scenario(
     )
 
     # Create the scenario_examination_findings
-    scenario_examination_findings = crud.crud_scenario.scenario_examination_finding.create_scenario_examination_findings(
-        db=db, obj_in=scenario_examination_findings, scenario_id=scenario.scenario_id
-    )
+    try:
+        scenario_examination_findings = crud.crud_scenario.scenario_examination_finding.create_scenario_examination_findings(
+            db=db,
+            obj_in=scenario_examination_findings,
+            scenario_id=scenario.scenario_id,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while creating the scenario examination findings",
+        )
 
     return {"detail": "Scenario created successfully"}
 
