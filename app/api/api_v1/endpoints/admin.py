@@ -478,12 +478,21 @@ def create_scenario(
     scenario_examination_findings = scenario_in.scenario_examination_findings
 
     # Create the scenario
-    scenario = crud.crud_scenario.scenario.create_scenario(db=db, obj_in=scenario, department_id=scenario_in.department_id, branch_id=current_user.branch_id)
-    
+    try:
+        scenario = crud.crud_scenario.scenario.create_scenario(db=db, obj_in=scenario, department_id=scenario_in.department_id, branch_id=current_user.branch_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="An error occurred while creating the scenario"
+        )
     # Create the scenario_examination_findings
-    scenario_examination_findings = crud.crud_scenario.scenario_examination_finding.create_scenario_examination_findings(
+    try:
+        scenario_examination_findings = crud.crud_scenario.scenario_examination_finding.create_scenario_examination_findings(
         db=db, obj_in=scenario_examination_findings, scenario_id=scenario.scenario_id
     )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="An error occurred while creating the scenario examination findings"
+        )
 
     return {"detail": "Scenario created successfully"}
 
@@ -494,7 +503,13 @@ def get_all_scenarios(
     db=Depends(deps.get_db),
     current_user=Depends(deps.get_current_active_user),
 ):
-    scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(db=db, branch_id=current_user.branch_id)
+    try:
+        scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(db=db, branch_id=current_user.branch_id)
+        return scenarios
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="An error occurred while retrieving the scenarios"
+        )
 
     
     return scenarios

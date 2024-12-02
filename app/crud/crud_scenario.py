@@ -42,16 +42,17 @@ class CRUDScenario(CRUDBase[Scenario, ScenarioCreate, ScenarioUpdate]):
     
 
     def get_scenario_with_findings(self, db: Session, *, branch_id: UUID):
-        result = (
+        try:
+            result = (
             db.query(Scenario)
             .filter(Scenario.branch_id == branch_id).options(joinedload(Scenario.scenario_examination_findings))
             .all()
         )
-        
-        if not result:
+
+            return result
+        except Exception as e:
+            print(f"Error in get_scenario_with_findings: {str(e)}")
             return None
-        
-        return result
         
 scenario = CRUDScenario(Scenario)
 
