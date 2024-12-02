@@ -343,7 +343,6 @@ def update_student(
     return user
 
 
-
 # Create a new department
 @router.post("/create_department", response_model=schemas.Department)
 def create_department(
@@ -355,14 +354,16 @@ def create_department(
     """
     Create new department.
     """
-    
+
     if current_user.role != "admin":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
-    
+
     try:
-        department = crud.department.create_department(db, obj_in=department_in, branch_id=current_user.branch_id)
+        department = crud.department.create_department(
+            db, obj_in=department_in, branch_id=current_user.branch_id
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -382,14 +383,16 @@ def read_departments(
     """
     Retrieve departments.
     """
-    
+
     if current_user.role != "admin":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
-        
+
     try:
-        departments = crud.department.get_departments_by_branch(db, branch_id=current_user.branch_id)
+        departments = crud.department.get_departments_by_branch(
+            db, branch_id=current_user.branch_id
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -408,14 +411,16 @@ def read_department_by_id(
     """
     Get a specific department by ID.
     """
-    
-    if current_user.role != "admin" :
+
+    if current_user.role != "admin":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
-        
+
     try:
-        department = crud.department.get_department_by_id(db, department_id=department_id, branch_id= current_user.branch_id)
+        department = crud.department.get_department_by_id(
+            db, department_id=department_id, branch_id=current_user.branch_id
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -438,15 +443,16 @@ def update_department(
     """
     Update a department.
     """
-    
+
     if current_user.role != "admin":
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
-        
-        
+
     try:
-        department = crud.department.get_department_by_id(db, department_id=department_id, branch_id= current_user.branch_id)
+        department = crud.department.get_department_by_id(
+            db, department_id=department_id, branch_id=current_user.branch_id
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -460,7 +466,6 @@ def update_department(
     return department
 
 
-
 @router.post("/create_scenario")
 def create_scenario(
     scenario_in: schemas.scenario.ScenarioData,
@@ -471,45 +476,57 @@ def create_scenario(
         raise HTTPException(
             status_code=403, detail="Only admins can perform this action"
         )
-        
+
     # Get the scenario from scene_in
     scenario = scenario_in.scenario
     # Get the scenario_examination_findings from scene_in
     scenario_examination_findings = scenario_in.scenario_examination_findings
 
     # Create the scenario
-    try:
-        scenario = crud.crud_scenario.scenario.create_scenario(db=db, obj_in=scenario, department_id=scenario_in.department_id, branch_id=current_user.branch_id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail="An error occurred while creating the scenario"
-        )
+    scenario = crud.crud_scenario.scenario.create_scenario(
+        db=db,
+        obj_in=scenario,
+        department_id=scenario_in.department_id,
+        branch_id=current_user.branch_id,
+    )
+
     # Create the scenario_examination_findings
     try:
         scenario_examination_findings = crud.crud_scenario.scenario_examination_finding.create_scenario_examination_findings(
-        db=db, obj_in=scenario_examination_findings, scenario_id=scenario.scenario_id
-    )
+            db=db,
+            obj_in=scenario_examination_findings,
+            scenario_id=scenario.scenario_id,
+        )
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail="An error occurred while creating the scenario examination findings"
+            status_code=500,
+            detail="An error occurred while creating the scenario examination findings",
         )
 
     return {"detail": "Scenario created successfully"}
 
 
 # Get all scenarios
-@router.get("/scenarios", response_model=List[schemas.scenario.ScenarioWithExaminationFinding])
+@router.get(
+    "/scenarios", response_model=List[schemas.scenario.ScenarioWithExaminationFinding]
+)
 def get_all_scenarios(
     db=Depends(deps.get_db),
     current_user=Depends(deps.get_current_active_user),
 ):
     try:
-        scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(db=db, branch_id=current_user.branch_id)
-        return scenarios
+        scenarios = crud.crud_scenario.scenario.get_scenario_with_findings(
+            db=db, branch_id=current_user.branch_id
+        )
+        return [
+            schemas.scenario.ScenarioWithExaminationFinding(
+                scenario=scenario.__dict__,
+                scenario_examination_findings=scenario.scenario_examination_findings.__dict__,
+            )
+            for scenario in scenarios
+        ]
     except Exception as e:
         raise HTTPException(
-            status_code=500, detail="An error occurred while retrieving the scenarios"
+            status_code=500,
+            detail="An error occurred while retrieving the scenarios",
         )
-
-    
-    return scenarios

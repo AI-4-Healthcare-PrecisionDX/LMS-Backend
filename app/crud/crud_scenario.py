@@ -1,5 +1,5 @@
 from typing import Any, Dict, Optional
-from sqlalchemy.orm import Session,joinedload
+from sqlalchemy.orm import Session, joinedload
 from app.crud.base import CRUDBase
 from app.models.scenarios import Scenario
 from app.models.scenario_examination_finding import ScenarioExaminationFinding
@@ -19,41 +19,60 @@ from app.schemas.scenario import (
 
 from uuid import UUID
 
+
 class CRUDScenario(CRUDBase[Scenario, ScenarioCreate, ScenarioUpdate]):
     def get_by_id(self, db: Session, *, scenario_id: str) -> Optional[Scenario]:
         return db.query(Scenario).filter(Scenario.scenario_id == scenario_id).first()
-    
-    def create_scenario(self, db: Session, *, obj_in: ScenarioCreate, department_id: UUID, branch_id : UUID) -> Scenario:
+
+    def create_scenario(
+        self,
+        db: Session,
+        *,
+        obj_in: ScenarioCreate,
+        department_id: UUID,
+        branch_id: UUID
+    ) -> Scenario:
         """Create a new scenario using only the fields present in obj_in"""
         # Convert obj_in to dict to easily check for field existence
         obj_data = obj_in.dict(exclude_unset=True)
-        
+
         # Add department_id to the data
         obj_data["department_id"] = department_id
         obj_data["branch_id"] = branch_id
-        
+
         # Create scenario instance with only provided fields
         db_obj = Scenario(**obj_data)
-        
+
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
-    
 
     def get_scenario_with_findings(self, db: Session, *, branch_id: UUID):
-        try:
-            result = (
+        return (
             db.query(Scenario)
-            .filter(Scenario.branch_id == branch_id).options(joinedload(Scenario.scenario_examination_findings))
+            .options(joinedload(Scenario.scenario_examination_findings))
+            .filter(Scenario.branch_id == branch_id)
             .all()
         )
 
-            return result
-        except Exception as e:
-            print(f"Error in get_scenario_with_findings: {str(e)}")
+    def get_scenario_by_department_id(
+        self, db: Session, *, department_id: UUID, skip: int = 0, limit: int = 100
+    ):
+        result = (
+            db.query(Scenario)
+            .filter(Scenario.department_id == department_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+        if not result:
             return None
-        
+
+        return result
+
+
 scenario = CRUDScenario(Scenario)
 
 
@@ -72,9 +91,13 @@ class CRUDScenarioExaminationFinding(
             .filter(ScenarioExaminationFinding.scenario_id == scenario_id)
             .first()
         )
-        
+
     def create_scenario_examination_findings(
-        self, db: Session, *, obj_in: ScenarioExaminationFindingCreate, scenario_id: UUID
+        self,
+        db: Session,
+        *,
+        obj_in: ScenarioExaminationFindingCreate,
+        scenario_id: UUID
     ) -> ScenarioExaminationFinding:
         db_obj = ScenarioExaminationFinding(
             vital_signs=obj_in.vital_signs,
@@ -82,7 +105,7 @@ class CRUDScenarioExaminationFinding(
             cardiovascular_findings=obj_in.cardiovascular_findings,
             lungs_findings=obj_in.lungs_findings,
             additional_findings=obj_in.additional_findings,
-            scenario_id=scenario_id
+            scenario_id=scenario_id,
         )
         db.add(db_obj)
         db.commit()
@@ -107,7 +130,9 @@ class CRUDScenarioThread(
             .first()
         )
 
-    def create_by_scenario_id(self, db: Session, *, scenario_id: UUID, student_id:UUID) -> ScenarioThread:
+    def create_by_scenario_id(
+        self, db: Session, *, scenario_id: UUID, student_id: UUID
+    ) -> ScenarioThread:
         db_obj = ScenarioThread(scenario_id=scenario_id, student_id=student_id)
         db.add(db_obj)
         db.commit()

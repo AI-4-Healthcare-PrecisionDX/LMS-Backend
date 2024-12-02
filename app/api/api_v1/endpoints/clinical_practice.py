@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from typing import AsyncGenerator
+from typing import AsyncGenerator, List, Any
+from sqlalchemy.orm import Session
 
 
 from app.api import deps
-from app.crud import crud_scenario
-from app.schemas import scenario
+from app.crud import crud_scenario, department
+from app.schemas import scenario, Department
+from app.models import Student
 from uuid import UUID
 from app.llm import ClinicalPracticeLLM
 
@@ -13,12 +15,11 @@ from app.llm import ClinicalPracticeLLM
 router = APIRouter()
 
 
-
 # Create a thread for a scenario
 @router.post("/{scenario_id}", response_model=scenario.ScenarioThread)
 def create_scenario_thread(
     scenario_id: UUID,
-    db=Depends(deps.get_db),
+    db: Session = Depends(deps.get_db),
     current_student=Depends(deps.get_current_active_student_user),
 ):
     # Check if the scenario exists
@@ -40,7 +41,7 @@ def create_scenario_thread(
 @router.get("/thread/{thread_id}", response_model=list[scenario.ScenarioThreadMessage])
 def get_thread_by_id(
     thread_id: UUID,
-    db=Depends(deps.get_db),
+    db: Session = Depends(deps.get_db),
     current_student=Depends(deps.get_current_active_student_user),
 ):
     thread = crud_scenario.scenario_thread.get_by_id(
@@ -50,10 +51,12 @@ def get_thread_by_id(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
         )
-        
+
     if thread.student_id != current_student.student_id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to view this thread")
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to view this thread",
+        )
 
     thread_messages = crud_scenario.scenario_thread_message.get_multi_by_thread_id(
         db=db, scenario_thread_id=thread_id
@@ -66,7 +69,7 @@ def get_thread_by_id(
 async def create_thread_message(
     thread_id: UUID,
     thread_message_in: scenario.ScenarioThreadMessageCreate,
-    db=Depends(deps.get_db),
+    db: Session = Depends(deps.get_db),
     current_student=Depends(deps.get_current_active_student_user),
 ):
     try:
@@ -78,10 +81,11 @@ async def create_thread_message(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
             )
-            
+
         if thread.student_id != current_student.student_id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to view this thread"
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not allowed to view this thread",
             )
 
         # Get all the thread messages
@@ -146,3 +150,59 @@ async def create_thread_message(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An error occurred while creating the thread message",
         )
+
+
+@router.get("/departments", response_model=List[Department])
+def read_departments(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: Student = Depends(deps.get_current_active_student_user),
+) -> Any:
+    """
+    Retrieve departments.
+    """
+    try:
+        departments = department.get_departments_for_student(
+            db, user_id=current_user.user_id, skip=skip, limit=limit
+        )
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the departments",
+        )
+    return departments
+
+
+@router.get(
+    "/department/{department_id}/scenarios",
+    response_model=List[scenario.ScenarioForStudent],
+)
+def read_department_scenarios(
+    department_id: UUID,
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+    current_user: Student = Depends(deps.get_current_active_student_user),
+) -> Any:
+    """
+    Retrieve department scenarios.
+    """
+    try:
+        department_data = department.get_department_for_student(
+            db, user_id=current_user.user_id, department_id=department_id
+        )
+        if not department_data:
+            raise HTTPException(status_code=404, detail="Department not found")
+
+        scenarios = crud_scenario.scenario.get_scenario_by_department_id(
+            db, department_id=department_id, skip=0, limit=100
+        )
+    except Exception as e:
+        print(e)
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the department scenarios",
+        )
+    return scenarios
