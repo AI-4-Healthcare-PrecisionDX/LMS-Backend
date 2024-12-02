@@ -7,10 +7,10 @@ class ScenarioBase(BaseModel):
     scenario_title: Optional[str] = None
     patient_name: Optional[str] = None
     patient_age: Optional[str] = None
-    patient_gender: Optional[str]= None
+    patient_gender: Optional[str] = None
     patient_chief_complaint: Optional[str] = None
-    detailed_description: Optional[str]= None
-    conversation_example: Optional[list[Dict]]= None
+    detailed_description: Optional[str] = None
+    conversation_example: Optional[list[Dict]] = None
 
 
 class ScenarioCreate(ScenarioBase):
@@ -26,8 +26,6 @@ class ScenarioUpdate(ScenarioBase):
 
 class ScenarioInDBBase(ScenarioBase):
     scenario_id: uuid.UUID
-    department_id: uuid.UUID
-    branch_id: uuid.UUID
 
     class Config:
         orm_mode = True
@@ -37,12 +35,20 @@ class Scenario(ScenarioInDBBase):
     pass
 
 
+class ScenarioForStudent(BaseModel):
+    scenario_id: uuid.UUID
+    scenario_title: str
+    patient_name: str
+    patient_age: str
+    patient_chief_complaint: str
+
+
 class ScenarioExaminationFindingBase(BaseModel):
     vital_signs: Optional[str] = None
-    general_appearance: Optional[str]= None
+    general_appearance: Optional[str] = None
     cardiovascular_findings: Optional[str] = None
-    lungs_findings: Optional[str] =  None
-    additional_findings: Optional[str]= None
+    lungs_findings: Optional[str] = None
+    additional_findings: Optional[str] = None
 
 
 class ScenarioExaminationFindingCreate(ScenarioExaminationFindingBase):
@@ -64,8 +70,12 @@ class ScenarioExaminationFinding(ScenarioExaminationFindingInDBBase):
     pass
 
 
-class ScenarioWithExaminationFinding(ScenarioInDBBase):
+class ScenarioWithExaminationFinding(BaseModel):
+    scenario: Scenario
     scenario_examination_findings: ScenarioExaminationFinding
+    # department_id: uuid.UUID
+    # branch_id: uuid.UUID
+
 
 class ScenarioData(BaseModel):
     scenario: ScenarioCreate
@@ -83,7 +93,6 @@ class ScenarioThreadCreate(ScenarioThreadBase):
 
 class ScenarioThreadUpdate(ScenarioThreadBase):
     pass
-
 
 
 class ScenarioThreadInDBBase(ScenarioThreadBase):

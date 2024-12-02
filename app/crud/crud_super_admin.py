@@ -11,6 +11,7 @@ from app.models.branch import Branch
 from app.schemas.super_admin import BranchCreate, BranchUpdate
 from app.models.department import Department
 from app.schemas.super_admin import DepartmentCreate, DepartmentUpdate
+from app.models import User
 
 
 class CRUDInstitution(CRUDBase[Institution, InstitutionCreate, InstitutionUpdate]):
@@ -101,15 +102,26 @@ class CRUDBranch(CRUDBase[Branch, BranchCreate, BranchUpdate]):
 
 
 class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
-    def get_department_by_id(self, db: Session, *, department_id: UUID, branch_id: UUID) -> Optional[Department]:
-        return db.query(Department).filter(Department.department_id == department_id,Department.branch_id==branch_id).first()
+    def get_department_by_id(
+        self, db: Session, *, department_id: UUID, branch_id: UUID
+    ) -> Optional[Department]:
+        return (
+            db.query(Department)
+            .filter(
+                Department.department_id == department_id,
+                Department.branch_id == branch_id,
+            )
+            .first()
+        )
 
     def get_department_by_email(
         self, db: Session, *, email: str
     ) -> Optional[Department]:
         return db.query(Department).filter(Department.email == email).first()
 
-    def create_department(self, db: Session, *, obj_in: DepartmentCreate,branch_id: UUID) -> Department:
+    def create_department(
+        self, db: Session, *, obj_in: DepartmentCreate, branch_id: UUID
+    ) -> Department:
         db_obj = Department(
             department_name=obj_in.department_name,
             branch_id=branch_id,
@@ -118,8 +130,8 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
         db.commit()
         db.refresh(db_obj)
         return db_obj
-    
-    def get_multi(self, db, *, skip = 0, limit = 100):
+
+    def get_multi(self, db, *, skip=0, limit=100):
         return super().get_multi(db, skip=skip, limit=limit)
 
     def update_department(
@@ -140,9 +152,38 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
         db.delete(department)
         db.commit()
         return department
-    
-    def get_departments_by_branch(self, db: Session, *, branch_id: UUID) -> Optional[Department]:
+
+    def get_departments_by_branch(self, db: Session, *, branch_id: UUID):
         return db.query(Department).filter(Department.branch_id == branch_id).all()
+
+    def get_departments_for_student(
+        self, db: Session, user_id: UUID, skip=0, limit=100
+    ):
+        # get the user
+        user = db.query(User).filter(User.user_id == user_id).first()
+        # get the department by user's branch_id
+        return (
+            db.query(Department)
+            .filter(Department.branch_id == user.branch_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+
+    def get_department_for_student(
+        self, db: Session, user_id: UUID, department_id: UUID
+    ):
+        # get the user
+        user = db.query(User).filter(User.user_id == user_id).first()
+        # get the department by user's branch_id
+        return (
+            db.query(Department)
+            .filter(
+                Department.branch_id == user.branch_id,
+                Department.department_id == department_id,
+            )
+            .first()
+        )
 
 
 institution = CRUDInstitution(Institution)
