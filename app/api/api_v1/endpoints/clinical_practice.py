@@ -41,7 +41,7 @@ def create_scenario_thread(
 def get_thread_by_id(
     thread_id: UUID,
     db=Depends(deps.get_db),
-    # current_student=Depends(deps.get_current_active_student_user),
+    current_student=Depends(deps.get_current_active_student_user),
 ):
     thread = crud_scenario.scenario_thread.get_by_id(
         db=db, scenario_thread_id=thread_id
@@ -50,6 +50,10 @@ def get_thread_by_id(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
         )
+        
+    if thread.student_id != current_student.student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to view this thread")
 
     thread_messages = crud_scenario.scenario_thread_message.get_multi_by_thread_id(
         db=db, scenario_thread_id=thread_id
@@ -63,6 +67,7 @@ async def create_thread_message(
     thread_id: UUID,
     thread_message_in: scenario.ScenarioThreadMessageCreate,
     db=Depends(deps.get_db),
+    current_student=Depends(deps.get_current_active_student_user),
 ):
     try:
         # Check if the thread exists
@@ -72,6 +77,11 @@ async def create_thread_message(
         if not thread:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
+            )
+            
+        if thread.student_id != current_student.student_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="You are not allowed to view this thread"
             )
 
         # Get all the thread messages

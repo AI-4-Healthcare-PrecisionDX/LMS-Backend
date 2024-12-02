@@ -123,7 +123,7 @@ class CRUDScenarioThreadMessage(
     ]
 ):
     def get_multi_by_thread_id(
-        self, db: Session, *, scenario_thread_id: str
+        self, db: Session, *, scenario_thread_id: UUID
     ) -> Optional[ScenarioThreadMessage]:
         return (
             db.query(ScenarioThreadMessage)
