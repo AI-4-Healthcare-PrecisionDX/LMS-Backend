@@ -20,6 +20,7 @@ from app.api.api_v1.endpoints import (
     student_event,
     student,
     clinical_practice,
+    combined
 )
 
 
@@ -63,4 +64,8 @@ api_router.include_router(student.router, prefix="/student", tags=["student"])
 
 api_router.include_router(
     clinical_practice.router, prefix="/clinical-practice", tags=["clinical-practice"]
+)
+
+api_router.include_router(
+    combined.router, prefix="/section", tags=["section combined"]
 )
