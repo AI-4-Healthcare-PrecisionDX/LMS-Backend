@@ -9,7 +9,7 @@ from app.crud import crud_scenario, department
 from app.schemas import scenario, Department
 from app.models import Student
 from uuid import UUID
-from app.llm import ClinicalPracticeLLM
+from app.llm import ClinicalPracticeEvaluationLLM
 
 
 router = APIRouter()
@@ -239,3 +239,22 @@ def read_department_scenarios(
             detail="An error occurred while retrieving the department scenarios",
         )
     return scenarios
+
+
+
+
+#create an endpoint to evaluate the clinical practice
+@router.post("/get/evaluate/")
+def evaluate_clinical_practice(
+    evaluation_data: scenario.ClinicalPracticeEvaluationCreate,
+    # db: Session = Depends(deps.get_db),
+    # current_student=Depends(deps.get_current_active_student_user),
+):
+    llm = ClinicalPracticeEvaluationLLM(
+        evaluation_data = evaluation_data
+    )
+    
+    evaluation = llm.evaluate_clinical_practice()
+    
+    
+    return evaluation

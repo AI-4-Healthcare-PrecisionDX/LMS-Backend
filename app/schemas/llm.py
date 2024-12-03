@@ -62,3 +62,53 @@ class AssignmentQuestionSet(BaseModel):
         ..., description="List of generated questions"
     )
     metadata: Metadata = Field(..., description="Metadata about the question set")
+
+
+
+class ConversationEvaluation(BaseModel):
+    relevance_of_replies_score: float
+    medical_accuracy_of_replies_score: float
+    communication_clarity_score: float
+    empathy_and_professionalism_score: float
+    strengths: List[str]
+    weaknesses: List[str]
+
+class DiagnosisEvaluation(BaseModel):
+    relevance_score: float
+    accuracy_score: float
+    strengths: List[str]
+    weaknesses: List[str]
+
+class TreatmentEvaluation(BaseModel):
+    relevance_score: float
+    effectiveness_score: float
+    strengths: List[str]
+    weaknesses: List[str]
+
+class NotesEvaluation(BaseModel):
+    clarity_score: float
+    completeness_score: float
+    strengths: List[str]
+    weaknesses: List[str]
+
+class AdditionalNotes(BaseModel):
+    time_management: str
+    other_observations: str
+
+class OverallPerformance(BaseModel):
+    overall_score: float
+    missed_opportunities: List[str]
+    overall_feedback: str
+    additional_notes: AdditionalNotes
+
+class EvaluationResult(BaseModel):
+    conversation_evaluation: ConversationEvaluation
+    diagnosis_evaluation: DiagnosisEvaluation
+    treatment_evaluation: TreatmentEvaluation
+    notes_evaluation: NotesEvaluation
+    overall_performance: OverallPerformance
+    
+    
+class EvaluationOutput(BaseModel):
+    evaluation_result: EvaluationResult
+    
