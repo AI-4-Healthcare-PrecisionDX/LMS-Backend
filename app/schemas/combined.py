@@ -1,10 +1,38 @@
-# app/schemas/combined.py
-# This is combined version of Announcement, SectionExclusiveContent and Assignment schemas
-
 from typing import List, Optional
 from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
+
+
+
+class DepartmentBase(BaseModel):
+    department_name: str
+    department_id: UUID
+    branch_id: UUID
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TemplateCourseBase(BaseModel):
+    template_course_id: UUID
+    template_name: str
+    template_description: str
+    template_year: str
+    course_outline: str
+    department_id: UUID
+    admin_id: UUID
+    created_at: datetime
+    updated_at: datetime
+    course_materials: List[dict]
+    branch_id: UUID
+    department: DepartmentBase
+
+    class Config:
+        from_attributes = True
+
+
 
 class AnnouncementBase(BaseModel):
     announcement_id: UUID
@@ -45,7 +73,39 @@ class AssignmentBase(BaseModel):
     class Config:
         from_attributes = True
 
+class AssignmentQuestionBase(BaseModel):
+    assignment_question_id: UUID
+    question_type: Optional[str]
+    question_text: str
+    options_for_mcq: Optional[List[str]] = None
+    marks: int
+    question_description: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AssignmentMaterialBase(BaseModel):
+    assignment_material_id: UUID
+    title: Optional[str]
+    description: Optional[str]
+    library_item_id: UUID
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class AssignmentWithDetails(AssignmentBase):
+    assignment_questions: List[AssignmentQuestionBase] = []
+    assignment_materials: List[AssignmentMaterialBase] = []
+
 class SectionCombinedResponse(BaseModel):
+    template_course: TemplateCourseBase
     announcements: List[AnnouncementBase]
     section_exclusive_contents: List[SectionExclusiveContentBase]
-    assignments: List[AssignmentBase]
+    assignments: List[AssignmentWithDetails]
+    
+    class Config:
+        from_attributes = True
