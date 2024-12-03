@@ -6,6 +6,8 @@ from app.api import deps
 from app.llm import QuestionLLM, ClinicalPracticeLLM
 from app import models
 
+import uuid
+
 router = APIRouter()
 
 
@@ -44,9 +46,11 @@ def create_questions(
         total_mcq_questions,
         total_broad_questions,
     )
+    session_id = uuid.uuid4()
     llm = QuestionLLM(
         question_type_count=question_type_count,
         pdf_file=pdf_file,
+        session_id=str(session_id),
     )
 
     questions, metadata = llm.generate_questions()

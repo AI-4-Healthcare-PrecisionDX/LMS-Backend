@@ -22,38 +22,46 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 
-
 class ClinicalPracticeEvaluationLLM:
-    def __init__(self,evaluation_data):
+    def __init__(self, evaluation_data, thread_id):
         self.llm = ChatOpenAI(
             api_key=settings.OPENAI_API_KEY,
             model=settings.OPENAI_MODEL,
             temperature=0,
         )
+        self.thread_id = thread_id
 
         self.evaluation_prompt = ClinicalPracticeEvaluationPrompt()
 
         self.output_parser = PydanticOutputParser(pydantic_object=EvaluationOutput)
         self.embeddings = OpenAIEmbeddings()
         self.evaluation_data = evaluation_data
+
     def evaluate_clinical_practice(self):
         start = time.time()
-        
+
         evaluation_data = self.evaluation_data
-        
+
         prompt, human_msg = self.evaluation_prompt.create_prompt(evaluation_data)
-        
+
         chain = prompt | self.llm | self.output_parser
-        
+
         langfuse_handler = CallbackHandler()
-        print(prompt)
         # Only pass the input variable as that's all that's needed
         evaluation = chain.invoke(
-            {
-                "input": [HumanMessage(content=human_msg)]
+            {"input": [HumanMessage(content=human_msg)]},
+            config={
+                "configurable": {"session_id": self.thread_id},
+                "callbacks": [langfuse_handler],
+                "run_name": "chat_evaluation",
+                "tags": [
+                    "chat_evaluation",
+                    settings.OPENAI_MODEL,
+                ],
+                "metadata": {
+                    "langfuse_session_id": str(self.thread_id),
+                },
             },
-            config={"callbacks": [langfuse_handler]},
         )
-        
-        
+
         return evaluation.evaluation_result

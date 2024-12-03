@@ -130,6 +130,15 @@ class CRUDScenarioThread(
             .first()
         )
 
+    def get_multi_by_student_id(
+        self, db: Session, *, student_id: UUID
+    ) -> Optional[ScenarioThread]:
+        return (
+            db.query(ScenarioThread)
+            .filter(ScenarioThread.student_id == student_id)
+            .all()
+        )
+
     def create_by_scenario_id(
         self, db: Session, *, scenario_id: UUID, student_id: UUID
     ) -> ScenarioThread:

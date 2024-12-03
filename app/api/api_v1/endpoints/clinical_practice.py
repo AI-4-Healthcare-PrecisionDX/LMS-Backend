@@ -2,14 +2,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
 from typing import AsyncGenerator, List, Any
 from sqlalchemy.orm import Session
-
+import uuid
 
 from app.api import deps
 from app.crud import crud_scenario, department
 from app.schemas import scenario, Department
 from app.models import Student
 from uuid import UUID
-from app.llm import ClinicalPracticeEvaluationLLM
+from app.llm import ClinicalPracticeEvaluationLLM, ClinicalPracticeLLM
 
 
 router = APIRouter()
@@ -67,6 +67,20 @@ def get_thread_by_id(
         return []
 
     return thread_messages
+
+
+@router.get("/threads", response_model=List[scenario.ScenarioThread])
+def get_threads(
+    db: Session = Depends(deps.get_db),
+    current_student=Depends(deps.get_current_active_student_user),
+):
+    threads = crud_scenario.scenario_thread.get_multi_by_student_id(
+        db=db, student_id=current_student.student_id
+    )
+    if not threads:
+        return []
+
+    return threads
 
 
 # Get case details
@@ -241,20 +255,19 @@ def read_department_scenarios(
     return scenarios
 
 
-
-
-#create an endpoint to evaluate the clinical practice
+# create an endpoint to evaluate the clinical practice
 @router.post("/get/evaluate/")
 def evaluate_clinical_practice(
     evaluation_data: scenario.ClinicalPracticeEvaluationCreate,
     # db: Session = Depends(deps.get_db),
     # current_student=Depends(deps.get_current_active_student_user),
 ):
+    # This will be replaced with a thread_id
+    session_id = uuid.uuid4()
     llm = ClinicalPracticeEvaluationLLM(
-        evaluation_data = evaluation_data
+        evaluation_data=evaluation_data, thread_id=str(session_id)
     )
-    
+
     evaluation = llm.evaluate_clinical_practice()
-    
-    
+
     return evaluation
