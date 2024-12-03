@@ -119,6 +119,8 @@ class ScenarioThreadMessageUpdate(ScenarioThreadMessageBase):
     pass
 
 
+class ScenarioThreadMessageForEval(ScenarioThreadMessageBase):
+    role: str
 class ScenarioThreadMessageInDBBase(ScenarioThreadMessageBase):
     scenario_thread_message_id: uuid.UUID
     role: Optional[str]
@@ -129,3 +131,30 @@ class ScenarioThreadMessageInDBBase(ScenarioThreadMessageBase):
 
 class ScenarioThreadMessage(ScenarioThreadMessageInDBBase):
     pass
+
+
+
+
+
+class ScenarioData(BaseModel):
+    scenario: ScenarioCreate
+    scenario_examination_findings: ScenarioExaminationFindingCreate
+    department_id: uuid.UUID
+
+
+
+
+
+class ClinicalPracticeEvaluationCreate(BaseModel):
+    scenario: ScenarioBase
+    scenario_examination_findings: ScenarioExaminationFindingBase
+    thread_messages: List[ScenarioThreadMessageForEval]
+    diagnosis: str
+    treatment: str
+    doctor_notes: str
+    
+
+
+    
+
+

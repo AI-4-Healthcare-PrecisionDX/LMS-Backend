@@ -111,5 +111,7 @@ from .scenario import (
     ScenarioThreadMessageUpdate,
     ScenarioThreadInDBBase,
     ScenarioThread,
-    ScenarioWithExaminationFinding
+    ScenarioWithExaminationFinding,
+    ClinicalPracticeEvaluationCreate,
+    
 )
