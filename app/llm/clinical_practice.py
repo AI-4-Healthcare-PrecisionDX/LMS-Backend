@@ -46,10 +46,12 @@ class ClinicalPracticeLLM:
     def __init__(self, session_id, scenario, scenario_examination_findings):
         self.llm = ChatOpenAI(
             api_key=settings.OPENAI_API_KEY,
-            model=settings.OPENAI_MODEL_CLINICAL_PRACTICE,
+            model=settings.OPENAI_MODEL,
             temperature=0,
             streaming=True,
+            max_tokens=100,
         )
+        self.thread_id = session_id
         self.memory = ChatMessageHistory(session_id)
         self.prompt = ClinicalPracticePrompt().create_prompt(
             scenario, scenario_examination_findings
@@ -78,7 +80,16 @@ class ClinicalPracticeLLM:
             async for chunk in with_history.astream(
                 {"messages": [HumanMessage(content=question)]},
                 config={
+                    "configurable": {"session_id": self.thread_id},
                     "callbacks": [langfuse_handler],
+                    "run_name": "chat",
+                    "tags": [
+                        "chat",
+                        settings.OPENAI_MODEL,
+                    ],
+                    "metadata": {
+                        "langfuse_session_id": str(self.thread_id),
+                    },
                 },
             ):
                 if hasattr(chunk, "content"):
