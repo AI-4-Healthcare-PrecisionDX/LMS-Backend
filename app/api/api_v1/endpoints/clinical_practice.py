@@ -10,7 +10,7 @@ from app.schemas import scenario, Department
 from app.models import Student
 from uuid import UUID
 from app.llm import ClinicalPracticeEvaluationLLM, ClinicalPracticeLLM
-from app.schemas.scenario import ScenarioWithExaminationFinding
+
 
 router = APIRouter()
 
@@ -84,7 +84,7 @@ def get_threads(
 
 
 # Get case details
-@router.get("/thread/{thread_id}", response_model=ScenarioWithExaminationFinding)
+@router.get("/thread/{thread_id}", response_model=scenario.ScenarioForStudent)
 def get_case_details(
     thread_id: UUID,
     db: Session = Depends(deps.get_db),
@@ -100,10 +100,6 @@ def get_case_details(
 
     # Get the scenario using thread id
     scenario = crud_scenario.scenario.get_by_id(db=db, scenario_id=thread.scenario_id)
-    scenario=ScenarioWithExaminationFinding(
-                scenario=scenario.__dict__,
-                scenario_examination_findings=scenario.scenario_examination_findings.__dict__,
-            )
     if not scenario:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found"
