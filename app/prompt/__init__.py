@@ -1,2 +1,3 @@
 from .question_prompt import QuestionPrompt
 from .clinical_practice import ClinicalPracticePrompt
+from .clinical_practice_evaluation_prompt import ClinicalPracticeEvaluationPrompt

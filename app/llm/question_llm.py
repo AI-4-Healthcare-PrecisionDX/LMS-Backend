@@ -23,12 +23,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 class QuestionLLM:
-    def __init__(self, question_type_count, pdf_file):
+    def __init__(self, question_type_count, pdf_file, session_id):
         self.llm = ChatOpenAI(
             api_key=settings.OPENAI_API_KEY,
             model=settings.OPENAI_MODEL,
             temperature=0,
         )
+        self.session_id = session_id
 
         self.question_prompt = QuestionPrompt()
         self.text_splitter = RecursiveCharacterTextSplitter(
@@ -95,7 +96,18 @@ class QuestionLLM:
 
         questions_set = chain.invoke(
             {"input": [""]},
-            config={"callbacks": [langfuse_handler]},
+            config={
+                "configurable": {"session_id": self.session_id},
+                "callbacks": [langfuse_handler],
+                "run_name": "assignment_questions",
+                "tags": [
+                    "assignment_questions",
+                    settings.OPENAI_MODEL,
+                ],
+                "metadata": {
+                    "langfuse_session_id": str(self.session_id),
+                },
+            },
         )
 
         return questions_set.questions, questions_set.metadata

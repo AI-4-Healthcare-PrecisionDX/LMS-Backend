@@ -1,2 +1,3 @@
 from .question_llm import QuestionLLM
 from .clinical_practice import ClinicalPracticeLLM
+from .clinical_practice_evaluation_llm import ClinicalPracticeEvaluationLLM

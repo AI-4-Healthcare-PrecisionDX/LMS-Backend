@@ -7,10 +7,10 @@ class ScenarioBase(BaseModel):
     scenario_title: Optional[str] = None
     patient_name: Optional[str] = None
     patient_age: Optional[str] = None
-    patient_gender: Optional[str]= None
+    patient_gender: Optional[str] = None
     patient_chief_complaint: Optional[str] = None
-    detailed_description: Optional[str]= None
-    conversation_example: Optional[list[Dict]]= None
+    detailed_description: Optional[str] = None
+    conversation_example: Optional[list[Dict]] = None
 
 
 class ScenarioCreate(ScenarioBase):
@@ -26,8 +26,6 @@ class ScenarioUpdate(ScenarioBase):
 
 class ScenarioInDBBase(ScenarioBase):
     scenario_id: uuid.UUID
-    department_id: uuid.UUID
-    branch_id: uuid.UUID
 
     class Config:
         orm_mode = True
@@ -37,12 +35,21 @@ class Scenario(ScenarioInDBBase):
     pass
 
 
+class ScenarioForStudent(BaseModel):
+    scenario_id: Optional[uuid.UUID]
+    scenario_title: Optional[str]
+    patient_name: Optional[str]
+    patient_age: Optional[str]
+    patient_gender: Optional[str]
+    patient_chief_complaint: Optional[str]
+
+
 class ScenarioExaminationFindingBase(BaseModel):
     vital_signs: Optional[str] = None
-    general_appearance: Optional[str]= None
+    general_appearance: Optional[str] = None
     cardiovascular_findings: Optional[str] = None
-    lungs_findings: Optional[str] =  None
-    additional_findings: Optional[str]= None
+    lungs_findings: Optional[str] = None
+    additional_findings: Optional[str] = None
 
 
 class ScenarioExaminationFindingCreate(ScenarioExaminationFindingBase):
@@ -64,8 +71,12 @@ class ScenarioExaminationFinding(ScenarioExaminationFindingInDBBase):
     pass
 
 
-class ScenarioWithExaminationFinding(ScenarioInDBBase):
+class ScenarioWithExaminationFinding(BaseModel):
+    scenario: Scenario
     scenario_examination_findings: ScenarioExaminationFinding
+    # department_id: uuid.UUID
+    # branch_id: uuid.UUID
+
 
 class ScenarioData(BaseModel):
     scenario: ScenarioCreate
@@ -83,7 +94,6 @@ class ScenarioThreadCreate(ScenarioThreadBase):
 
 class ScenarioThreadUpdate(ScenarioThreadBase):
     pass
-
 
 
 class ScenarioThreadInDBBase(ScenarioThreadBase):
@@ -109,6 +119,8 @@ class ScenarioThreadMessageUpdate(ScenarioThreadMessageBase):
     pass
 
 
+class ScenarioThreadMessageForEval(ScenarioThreadMessageBase):
+    role: str
 class ScenarioThreadMessageInDBBase(ScenarioThreadMessageBase):
     scenario_thread_message_id: uuid.UUID
     role: Optional[str]
@@ -119,3 +131,30 @@ class ScenarioThreadMessageInDBBase(ScenarioThreadMessageBase):
 
 class ScenarioThreadMessage(ScenarioThreadMessageInDBBase):
     pass
+
+
+
+
+
+class ScenarioData(BaseModel):
+    scenario: ScenarioCreate
+    scenario_examination_findings: ScenarioExaminationFindingCreate
+    department_id: uuid.UUID
+
+
+
+
+
+class ClinicalPracticeEvaluationCreate(BaseModel):
+    scenario: ScenarioBase
+    scenario_examination_findings: ScenarioExaminationFindingBase
+    thread_messages: List[ScenarioThreadMessageForEval]
+    diagnosis: str
+    treatment: str
+    doctor_notes: str
+    
+
+
+    
+
+

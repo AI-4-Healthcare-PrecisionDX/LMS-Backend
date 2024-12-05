@@ -10,4 +10,9 @@ python app/backend_pre_start.py
 alembic upgrade head
 
 # Run the main process
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Run the main process with worker configuration
+exec uvicorn app.main:app \
+    --host 0.0.0.0 \
+    --port 8000 \
+    --workers 4 \
+    --log-level info \
