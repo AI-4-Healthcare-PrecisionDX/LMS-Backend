@@ -62,7 +62,8 @@ def update_student_event(
     """
     Update a student event.
     """
-    event = crud.student_event.get_student_event_by_id(db=db, id=event_id)
+    event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id)
+
     if not event:
         raise HTTPException(status_code=404, detail="Student event not found")
 
@@ -88,7 +89,7 @@ def read_student_event(
     """
     Get a specific student event by ID.
     """
-    event = crud.student_event.get_student_event_by_id(db=db, id=event_id)
+    event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Student event not found")
     return event
@@ -103,12 +104,12 @@ def delete_student_event(
     """
     Delete a student event.
     """
-    event = crud.student_event.get_student_event_by_id(db=db, id=event_id)
+    event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Student event not found")
 
     try:
-        crud.student_event.delete_student_event(db, id=event_id)
+        crud.student_event.delete_student_event(db, event_id=event_id)
     except Exception as e:
         print(f"Error deleting student event: {str(e)}")
         raise HTTPException(
