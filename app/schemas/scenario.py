@@ -146,9 +146,8 @@ class ScenarioData(BaseModel):
 
 
 class ClinicalPracticeEvaluationCreate(BaseModel):
-    scenario: ScenarioBase
-    scenario_examination_findings: ScenarioExaminationFindingBase
-    thread_messages: List[ScenarioThreadMessageForEval]
+
+    scenario_thread_id: uuid.UUID
     diagnosis: str
     treatment: str
     doctor_notes: str
@@ -156,5 +155,44 @@ class ClinicalPracticeEvaluationCreate(BaseModel):
 
 
     
+class ScenarioEvaluationBase(BaseModel):
+    conversation_relevance_of_replies_score: Optional[float] = None
+    conversation_medical_accuracy_of_replies_score: Optional[float] = None
+    conversation_communication_clarity_score: Optional[float] = None
+    conversation_empathy_and_professionalism_score: Optional[float] = None
+    conversation_constructive_feedback: Optional[str] = None
+    
+    diagnosis_relevance_score: Optional[float] = None
+    diagnosis_accuracy_score: Optional[float] = None
+    diagnosis_constructive_feedback: Optional[str] = None
+    
+    treatment_relevance_score: Optional[float] = None
+    treatment_effectiveness_score: Optional[float] = None
+    treatment_constructive_feedback: Optional[str] = None
+    
+    notes_clarity_score: Optional[float] = None
+    notes_completeness_score: Optional[float] = None
+    notes_constructive_feedback: Optional[str] = None
+    
+    time_management: Optional[str] = None
+    other_observations: Optional[str] = None
+    
+    overall_score: Optional[float] = None
+    overall_constructive_feedback: Optional[str] = None
+    additional_notes: Optional[str] = None
 
 
+class ScenarioEvaluationCreate(ScenarioEvaluationBase):
+    thread_id: uuid.UUID
+
+
+class ScenarioEvaluationUpdate(ScenarioEvaluationBase):
+    pass
+
+
+class ScenarioEvaluation(ScenarioEvaluationBase):
+    scenario_evaluation_id: uuid.UUID = Field(default_factory=uuid.uuid4)
+    thread_id: uuid.UUID
+
+    class Config:
+        from_attributes = True  #

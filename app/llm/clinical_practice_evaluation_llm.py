@@ -23,13 +23,13 @@ logging.basicConfig(level=logging.INFO)
 
 
 class ClinicalPracticeEvaluationLLM:
-    def __init__(self, evaluation_data, thread_id):
+    def __init__(self, evaluation_data, scenario_thread_id):
         self.llm = ChatOpenAI(
             api_key=settings.OPENAI_API_KEY,
             model=settings.OPENAI_MODEL,
             temperature=0,
         )
-        self.thread_id = thread_id
+        self.scenario_thread_id = scenario_thread_id
 
         self.evaluation_prompt = ClinicalPracticeEvaluationPrompt()
 
@@ -51,7 +51,7 @@ class ClinicalPracticeEvaluationLLM:
         evaluation = chain.invoke(
             {"input": [HumanMessage(content=human_msg)]},
             config={
-                "configurable": {"session_id": self.thread_id},
+                "configurable": {"session_id": self.scenario_thread_id},
                 "callbacks": [langfuse_handler],
                 "run_name": "chat_evaluation",
                 "tags": [
@@ -59,7 +59,7 @@ class ClinicalPracticeEvaluationLLM:
                     settings.OPENAI_MODEL,
                 ],
                 "metadata": {
-                    "langfuse_session_id": str(self.thread_id),
+                    "langfuse_session_id": str(self.scenario_thread_id),
                 },
             },
         )

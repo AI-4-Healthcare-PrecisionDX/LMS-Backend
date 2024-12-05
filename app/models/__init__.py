@@ -28,3 +28,4 @@ from .section_members import SectionMembers
 from .scenarios import Scenario
 from .scenario_examination_finding import ScenarioExaminationFinding
 from .scenario_thread import ScenarioThread, ScenarioThreadMessage
+from .scenario_evaluation import ScenarioEvaluation
