@@ -10,8 +10,13 @@ from app.schemas import scenario, Department
 from app.models import Student
 from uuid import UUID
 from app.llm import ClinicalPracticeEvaluationLLM, ClinicalPracticeLLM
-
-
+from app.schemas.scenario import ScenarioEvaluationCreate
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from app.api import deps
+from app.crud import crud_scenario
+from app.schemas import scenario
+from app.models.scenario_evaluation import ScenarioEvaluation  # Import SQLAlchemy model
 router = APIRouter()
 
 
@@ -255,19 +260,124 @@ def read_department_scenarios(
     return scenarios
 
 
+
+
+# # create an endpoint to evaluate the clinical practice
+# @router.post("/get/evaluate/")
+# def evaluate_clinical_practice(
+#     evaluation_data: scenario.ClinicalPracticeEvaluationCreate,
+#     # db: Session = Depends(deps.get_db),
+#     # current_student=Depends(deps.get_current_active_student_user),
+# ):
+#     # This will be replaced with a thread_id
+#     session_id = uuid.uuid4()
+#     llm = ClinicalPracticeEvaluationLLM(
+#         evaluation_data=evaluation_data, scenario_thread_id=str(session_id)
+#     )
+
+#     evaluation = llm.evaluate_clinical_practice()
+
+#     return evaluation
+
+
 # create an endpoint to evaluate the clinical practice
-@router.post("/get/evaluate/")
+# app/api/api_v1/endpoints/clinical_practice.py
+
+
+
+@router.post("/get/evaluation", response_model=scenario.ScenarioEvaluation)
 def evaluate_clinical_practice(
     evaluation_data: scenario.ClinicalPracticeEvaluationCreate,
-    # db: Session = Depends(deps.get_db),
-    # current_student=Depends(deps.get_current_active_student_user),
+    db: Session = Depends(deps.get_db),
 ):
-    # This will be replaced with a thread_id
-    session_id = uuid.uuid4()
+    scenario_thread_id = evaluation_data.scenario_thread_id
+    
+    # Get scenario and thread data
+    scenario_thread = crud_scenario.scenario_thread.get_by_id(
+        db=db, 
+        scenario_thread_id=scenario_thread_id
+    )
+    
+    scenario_data = crud_scenario.scenario.get_scenario_with_findings_by_scenario_id(
+        db=db, 
+        scenario_id=scenario_thread.scenario_id
+    )
+    
+    thread_data = crud_scenario.scenario_thread.get_thread_with_messages_by_scenario_id(
+        db=db, 
+        scenario_thread_id=scenario_thread_id
+    )
+    
+    # Prepare evaluation data
+    llm_evaluation_data = {
+        "scenario_title": scenario_data.scenario_title,
+        "patient_age": scenario_data.patient_age,
+        "patient_gender": scenario_data.patient_gender,
+        "patient_chief_complaint": scenario_data.patient_chief_complaint,
+        "detailed_description": scenario_data.detailed_description,
+        "vital_signs": scenario_data.scenario_examination_findings.vital_signs,
+        "general_appearance": scenario_data.scenario_examination_findings.general_appearance,
+        "cardiovascular_findings": scenario_data.scenario_examination_findings.cardiovascular_findings,
+        "lungs_findings": scenario_data.scenario_examination_findings.lungs_findings,
+        "additional_findings": scenario_data.scenario_examination_findings.additional_findings,
+        "thread_messages": thread_data,
+        "diagnosis": evaluation_data.diagnosis,
+        "treatment": evaluation_data.treatment,
+        "doctor_notes": evaluation_data.doctor_notes
+    }
+    
+    # Get evaluation from LLM
     llm = ClinicalPracticeEvaluationLLM(
-        evaluation_data=evaluation_data, thread_id=str(session_id)
+        evaluation_data=llm_evaluation_data,
+        scenario_thread_id=str(scenario_thread_id)
     )
 
-    evaluation = llm.evaluate_clinical_practice()
+    llm_evaluation = llm.evaluate_clinical_practice()
+    
+    # Create evaluation data for database
+    evaluation_create_data = {
+        "thread_id": scenario_thread_id,
+        "conversation_relevance_of_replies_score": llm_evaluation["conversation_evaluation"]["relevance_of_replies_score"],
+        "conversation_medical_accuracy_of_replies_score": llm_evaluation["conversation_evaluation"]["medical_accuracy_of_replies_score"],
+        "conversation_communication_clarity_score": llm_evaluation["conversation_evaluation"]["communication_clarity_score"],
+        "conversation_empathy_and_professionalism_score": llm_evaluation["conversation_evaluation"]["empathy_and_professionalism_score"],
+        "conversation_constructive_feedback": llm_evaluation["conversation_evaluation"]["constructive_feedback"],
+        
+        "diagnosis_relevance_score": llm_evaluation["diagnosis_evaluation"]["relevance_score"],
+        "diagnosis_accuracy_score": llm_evaluation["diagnosis_evaluation"]["accuracy_score"],
+        "diagnosis_constructive_feedback": llm_evaluation["diagnosis_evaluation"]["constructive_feedback"],
+        
+        "treatment_relevance_score": llm_evaluation["treatment_evaluation"]["relevance_score"],
+        "treatment_effectiveness_score": llm_evaluation["treatment_evaluation"]["effectiveness_score"],
+        "treatment_constructive_feedback": llm_evaluation["treatment_evaluation"]["constructive_feedback"],
+        
+        "notes_clarity_score": llm_evaluation["notes_evaluation"]["clarity_score"],
+        "notes_completeness_score": llm_evaluation["notes_evaluation"]["completeness_score"],
+        "notes_constructive_feedback": llm_evaluation["notes_evaluation"]["constructive_feedback"],
+        
+        "overall_score": llm_evaluation["overall_performance"]["overall_score"],
+        "overall_constructive_feedback": llm_evaluation["overall_performance"]["constructive_feedback"],
+        "time_management": llm_evaluation["overall_performance"]["additional_notes"]["time_management"],
+        "other_observations": llm_evaluation["overall_performance"]["additional_notes"]["other_observations"]
+    }
+    
+    # Save evaluation to database
+    evaluation = crud_scenario.scenario_evaluation.create_evaluation(
+        db=db,
+        obj_in=evaluation_create_data
+    )
 
     return evaluation
+
+@router.get("/ongoing-evaluation/{thread_id}")
+def ongoing_evaluation(
+    thread_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_student=Depends(deps.get_current_active_student_user),
+):
+    
+    # Check if the thread exists in the evaluation table
+    evaluation = crud_scenario.scenario_evaluation.get_by_thread_id(
+        db=db, scenario_thread_id=thread_id
+    )
+        

@@ -65,50 +65,47 @@ class AssignmentQuestionSet(BaseModel):
 
 
 
+
+
+
+
+
+
 class ConversationEvaluation(BaseModel):
     relevance_of_replies_score: float
     medical_accuracy_of_replies_score: float
     communication_clarity_score: float
     empathy_and_professionalism_score: float
-    strengths: List[str]
-    weaknesses: List[str]
+    constructive_feedback: str
 
 class DiagnosisEvaluation(BaseModel):
     relevance_score: float
     accuracy_score: float
-    strengths: List[str]
-    weaknesses: List[str]
+    constructive_feedback: str
 
 class TreatmentEvaluation(BaseModel):
     relevance_score: float
     effectiveness_score: float
-    strengths: List[str]
-    weaknesses: List[str]
+    constructive_feedback: str
 
 class NotesEvaluation(BaseModel):
     clarity_score: float
     completeness_score: float
-    strengths: List[str]
-    weaknesses: List[str]
-
-class AdditionalNotes(BaseModel):
-    time_management: str
-    other_observations: str
+    constructive_feedback: str
 
 class OverallPerformance(BaseModel):
     overall_score: float
-    missed_opportunities: List[str]
-    overall_feedback: str
-    additional_notes: AdditionalNotes
+    constructive_feedback: str
+    additional_notes: dict = {
+        "time_management": str,
+        "other_observations": str
+    }
 
-class EvaluationResult(BaseModel):
-    conversation_evaluation: ConversationEvaluation
-    diagnosis_evaluation: DiagnosisEvaluation
-    treatment_evaluation: TreatmentEvaluation
-    notes_evaluation: NotesEvaluation
-    overall_performance: OverallPerformance
-    
-    
 class EvaluationOutput(BaseModel):
-    evaluation_result: EvaluationResult
-    
+    evaluation_result: dict = {
+        "conversation_evaluation": ConversationEvaluation,
+        "diagnosis_evaluation": DiagnosisEvaluation,
+        "treatment_evaluation": TreatmentEvaluation,
+        "notes_evaluation": NotesEvaluation,
+        "overall_performance": OverallPerformance
+    }

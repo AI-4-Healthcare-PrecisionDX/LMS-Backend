@@ -30,6 +30,10 @@ class ScenarioThread(Base):
     scenario_thread_messages = relationship(
         "ScenarioThreadMessage", back_populates="scenario_thread", cascade="all, delete"
     )
+    
+    scenario_evaluation = relationship(
+        "ScenarioEvaluation", back_populates="thread", cascade="all, delete", uselist=False
+    )
 
 
 class ScenarioThreadMessage(Base):
