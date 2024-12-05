@@ -39,7 +39,7 @@ class CRUDStudentEvent(CRUDBase[StudentEvent, StudentEventCreate, StudentEventUp
         db.refresh(db_obj)
         return db_obj
 
-    def delete_student_event(self, db: Session, *, event_id: int) -> StudentEvent | None:
+    def delete_student_event(self, db: Session, *, event_id: UUID) -> StudentEvent | None:
         """
         Remove a student event by its event_id.
         """
