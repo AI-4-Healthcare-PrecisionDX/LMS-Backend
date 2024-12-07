@@ -196,6 +196,6 @@ class StudentScenario(BaseModel):
 
 
 class ScenarioForStudentOutput(BaseModel):
-    department_scenarios: Optional[List[StudentScenario]] = []
-    evaluated_scenarios: Optional[List[StudentScenario]] = []
-    unevaluated_scenarios: Optional[List[StudentScenario]] = []
+    department_scenarios: Optional[List[ScenarioForStudent]]
+    evaluated_scenarios: Optional[List[StudentScenario]]
+    unevaluated_scenarios: Optional[List[StudentScenario]]
