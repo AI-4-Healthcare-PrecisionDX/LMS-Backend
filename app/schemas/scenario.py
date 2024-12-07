@@ -28,20 +28,11 @@ class ScenarioInDBBase(ScenarioBase):
     scenario_id: uuid.UUID
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class Scenario(ScenarioInDBBase):
     pass
-
-
-class ScenarioForStudent(BaseModel):
-    scenario_id: Optional[uuid.UUID]
-    scenario_title: Optional[str]
-    patient_name: Optional[str]
-    patient_age: Optional[str]
-    patient_gender: Optional[str]
-    patient_chief_complaint: Optional[str]
 
 
 class ScenarioExaminationFindingBase(BaseModel):
@@ -64,7 +55,7 @@ class ScenarioExaminationFindingInDBBase(ScenarioExaminationFindingBase):
     scenario_examination_finding_id: uuid.UUID
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ScenarioExaminationFinding(ScenarioExaminationFindingInDBBase):
@@ -85,7 +76,7 @@ class ScenarioData(BaseModel):
 
 
 class ScenarioThreadBase(BaseModel):
-    pass
+    name: Optional[str] = None
 
 
 class ScenarioThreadCreate(ScenarioThreadBase):
@@ -100,7 +91,7 @@ class ScenarioThreadInDBBase(ScenarioThreadBase):
     scenario_thread_id: Optional[uuid.UUID]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ScenarioThread(ScenarioThreadInDBBase):
@@ -121,19 +112,18 @@ class ScenarioThreadMessageUpdate(ScenarioThreadMessageBase):
 
 class ScenarioThreadMessageForEval(ScenarioThreadMessageBase):
     role: str
+
+
 class ScenarioThreadMessageInDBBase(ScenarioThreadMessageBase):
     scenario_thread_message_id: uuid.UUID
     role: Optional[str]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class ScenarioThreadMessage(ScenarioThreadMessageInDBBase):
     pass
-
-
-
 
 
 class ScenarioData(BaseModel):
@@ -142,41 +132,34 @@ class ScenarioData(BaseModel):
     department_id: uuid.UUID
 
 
-
-
-
 class ClinicalPracticeEvaluationCreate(BaseModel):
-
-    scenario_thread_id: uuid.UUID
     diagnosis: str
     treatment: str
     doctor_notes: str
-    
 
 
-    
 class ScenarioEvaluationBase(BaseModel):
     conversation_relevance_of_replies_score: Optional[float] = None
     conversation_medical_accuracy_of_replies_score: Optional[float] = None
     conversation_communication_clarity_score: Optional[float] = None
     conversation_empathy_and_professionalism_score: Optional[float] = None
     conversation_constructive_feedback: Optional[str] = None
-    
+
     diagnosis_relevance_score: Optional[float] = None
     diagnosis_accuracy_score: Optional[float] = None
     diagnosis_constructive_feedback: Optional[str] = None
-    
+
     treatment_relevance_score: Optional[float] = None
     treatment_effectiveness_score: Optional[float] = None
     treatment_constructive_feedback: Optional[str] = None
-    
+
     notes_clarity_score: Optional[float] = None
     notes_completeness_score: Optional[float] = None
     notes_constructive_feedback: Optional[str] = None
-    
+
     time_management: Optional[str] = None
     other_observations: Optional[str] = None
-    
+
     overall_score: Optional[float] = None
     overall_constructive_feedback: Optional[str] = None
     additional_notes: Optional[str] = None
@@ -196,3 +179,23 @@ class ScenarioEvaluation(ScenarioEvaluationBase):
 
     class Config:
         from_attributes = True  #
+
+
+class ScenarioForStudent(BaseModel):
+    scenario_id: Optional[uuid.UUID]
+    scenario_title: Optional[str]
+    patient_name: Optional[str]
+    patient_age: Optional[str]
+    patient_gender: Optional[str]
+    patient_chief_complaint: Optional[str]
+
+
+class StudentScenario(BaseModel):
+    thread: ScenarioThread
+    scenario: ScenarioForStudent
+
+
+class ScenarioForStudentOutput(BaseModel):
+    department_scenarios: Optional[List[StudentScenario]] = []
+    evaluated_scenarios: Optional[List[StudentScenario]] = []
+    unevaluated_scenarios: Optional[List[StudentScenario]] = []

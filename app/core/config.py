@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str
     OPENAI_MODEL_CLINICAL_PRACTICE: str
 
+    IS_DEV: bool = True
+
     model_config = SettingsConfigDict(env_file=".env")
 
 

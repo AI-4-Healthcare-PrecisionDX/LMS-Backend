@@ -14,7 +14,7 @@ services:
     ports:
       - "8000:8000"
     command: >
-      bash app/scripts/prestart.sh
+      bash app/scripts/prestart_dev.sh
 
   db:
     image: postgres:16-alpine

@@ -18,6 +18,7 @@ class ScenarioThread(Base):
         unique=True,
         index=True,
     )
+    name = Column(String)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
@@ -30,9 +31,12 @@ class ScenarioThread(Base):
     scenario_thread_messages = relationship(
         "ScenarioThreadMessage", back_populates="scenario_thread", cascade="all, delete"
     )
-    
+
     scenario_evaluation = relationship(
-        "ScenarioEvaluation", back_populates="thread", cascade="all, delete", uselist=False
+        "ScenarioEvaluation",
+        back_populates="thread",
+        cascade="all, delete",
+        uselist=False,
     )
 
 
