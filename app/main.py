@@ -36,11 +36,14 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+
 # Health check endpoints
 @app.get("/health")
 async def health_check():
     """General health check endpoint"""
     return {"status": "healthy"}
+
 
 @app.get("/health/db")
 async def check_db_health(background_tasks: BackgroundTasks):
@@ -52,22 +55,21 @@ async def check_db_health(background_tasks: BackgroundTasks):
             db.execute(text("SELECT 1"))
             return {"status": "healthy"}
         except Exception as e:
-            logger.error(f"Database health check failed: {str(e)}")
             # If connection fails, trigger pool reset
             background_tasks.add_task(force_reset_pool)
             return {
                 "status": "unhealthy",
                 "message": "Resetting connection pool",
-                "error": str(e)
+                "error": str(e),
             }
         finally:
             db.close()
     except Exception as e:
-        logger.error(f"Failed to create database session: {str(e)}")
         return {
             "status": "critical",
             "message": "Unable to establish database connection",
-            "error": str(e)
+            "error": str(e),
         }
+
 
 app.include_router(api_router, prefix=settings.API_V1_STR)

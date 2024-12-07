@@ -17,6 +17,7 @@ from app.api import deps
 from app.crud import crud_scenario
 from app.schemas import scenario
 from app.models.scenario_evaluation import ScenarioEvaluation  # Import SQLAlchemy model
+
 router = APIRouter()
 
 
@@ -136,6 +137,12 @@ async def create_thread_message(
                 detail="You are not allowed to view this thread",
             )
 
+        if thread.scenario_evaluation:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Evaluation already exists for this thread",
+            )
+
         # Get all the thread messages
         thread_messages = crud_scenario.scenario_thread_message.get_multi_by_thread_id(
             db=db, scenario_thread_id=thread_id
@@ -227,7 +234,7 @@ def read_departments(
 
 @router.get(
     "/department/{department_id}/scenarios",
-    response_model=List[scenario.ScenarioForStudent],
+    response_model=scenario.ScenarioForStudentOutput,
 )
 def read_department_scenarios(
     department_id: UUID,
@@ -237,29 +244,30 @@ def read_department_scenarios(
     current_user: Student = Depends(deps.get_current_active_student_user),
 ) -> Any:
     """
-    Retrieve department scenarios.
+    Retrieve department scenarios, user specific case.
     """
     try:
-        department_data = department.get_department_for_student(
-            db, user_id=current_user.user_id, department_id=department_id
+        department_scenarios = crud_scenario.scenario.get_scenario_by_department_id(
+            db, department_id=department_id, skip=skip, limit=limit
         )
-        if not department_data:
-            raise HTTPException(status_code=404, detail="Department not found")
+        evaluated_scenarios = crud_scenario.scenario.get_student_evaluated_threads(
+            db, student_id=current_user.student_id, department_id=department_id
+        )
+        unevaluated_scenarios = crud_scenario.scenario.get_student_unevaluated_threads(
+            db, student_id=current_user.student_id, department_id=department_id
+        )
 
-        scenarios = crud_scenario.scenario.get_scenario_by_department_id(
-            db, department_id=department_id, skip=0, limit=100
+        return scenario.ScenarioForStudentOutput(
+            department_scenarios=department_scenarios,
+            evaluated_scenarios=evaluated_scenarios,
+            unevaluated_scenarios=unevaluated_scenarios,
         )
-        if not scenarios:
-            return []
     except Exception as e:
         print(e)
         raise HTTPException(
             status_code=500,
             detail="An error occurred while retrieving the department scenarios",
         )
-    return scenarios
-
-
 
 
 # # create an endpoint to evaluate the clinical practice
@@ -284,100 +292,144 @@ def read_department_scenarios(
 # app/api/api_v1/endpoints/clinical_practice.py
 
 
-
-@router.post("/get/evaluation", response_model=scenario.ScenarioEvaluation)
+@router.post("/{thread_id}/evaluation", response_model=scenario.ScenarioEvaluation)
 def evaluate_clinical_practice(
-    evaluation_data: scenario.ClinicalPracticeEvaluationCreate,
-    db: Session = Depends(deps.get_db),
-):
-    scenario_thread_id = evaluation_data.scenario_thread_id
-    
-    # Get scenario and thread data
-    scenario_thread = crud_scenario.scenario_thread.get_by_id(
-        db=db, 
-        scenario_thread_id=scenario_thread_id
-    )
-    
-    scenario_data = crud_scenario.scenario.get_scenario_with_findings_by_scenario_id(
-        db=db, 
-        scenario_id=scenario_thread.scenario_id
-    )
-    
-    thread_data = crud_scenario.scenario_thread.get_thread_with_messages_by_scenario_id(
-        db=db, 
-        scenario_thread_id=scenario_thread_id
-    )
-    
-    # Prepare evaluation data
-    llm_evaluation_data = {
-        "scenario_title": scenario_data.scenario_title,
-        "patient_age": scenario_data.patient_age,
-        "patient_gender": scenario_data.patient_gender,
-        "patient_chief_complaint": scenario_data.patient_chief_complaint,
-        "detailed_description": scenario_data.detailed_description,
-        "vital_signs": scenario_data.scenario_examination_findings.vital_signs,
-        "general_appearance": scenario_data.scenario_examination_findings.general_appearance,
-        "cardiovascular_findings": scenario_data.scenario_examination_findings.cardiovascular_findings,
-        "lungs_findings": scenario_data.scenario_examination_findings.lungs_findings,
-        "additional_findings": scenario_data.scenario_examination_findings.additional_findings,
-        "thread_messages": thread_data,
-        "diagnosis": evaluation_data.diagnosis,
-        "treatment": evaluation_data.treatment,
-        "doctor_notes": evaluation_data.doctor_notes
-    }
-    
-    # Get evaluation from LLM
-    llm = ClinicalPracticeEvaluationLLM(
-        evaluation_data=llm_evaluation_data,
-        scenario_thread_id=str(scenario_thread_id)
-    )
-
-    llm_evaluation = llm.evaluate_clinical_practice()
-    
-    # Create evaluation data for database
-    evaluation_create_data = {
-        "thread_id": scenario_thread_id,
-        "conversation_relevance_of_replies_score": llm_evaluation["conversation_evaluation"]["relevance_of_replies_score"],
-        "conversation_medical_accuracy_of_replies_score": llm_evaluation["conversation_evaluation"]["medical_accuracy_of_replies_score"],
-        "conversation_communication_clarity_score": llm_evaluation["conversation_evaluation"]["communication_clarity_score"],
-        "conversation_empathy_and_professionalism_score": llm_evaluation["conversation_evaluation"]["empathy_and_professionalism_score"],
-        "conversation_constructive_feedback": llm_evaluation["conversation_evaluation"]["constructive_feedback"],
-        
-        "diagnosis_relevance_score": llm_evaluation["diagnosis_evaluation"]["relevance_score"],
-        "diagnosis_accuracy_score": llm_evaluation["diagnosis_evaluation"]["accuracy_score"],
-        "diagnosis_constructive_feedback": llm_evaluation["diagnosis_evaluation"]["constructive_feedback"],
-        
-        "treatment_relevance_score": llm_evaluation["treatment_evaluation"]["relevance_score"],
-        "treatment_effectiveness_score": llm_evaluation["treatment_evaluation"]["effectiveness_score"],
-        "treatment_constructive_feedback": llm_evaluation["treatment_evaluation"]["constructive_feedback"],
-        
-        "notes_clarity_score": llm_evaluation["notes_evaluation"]["clarity_score"],
-        "notes_completeness_score": llm_evaluation["notes_evaluation"]["completeness_score"],
-        "notes_constructive_feedback": llm_evaluation["notes_evaluation"]["constructive_feedback"],
-        
-        "overall_score": llm_evaluation["overall_performance"]["overall_score"],
-        "overall_constructive_feedback": llm_evaluation["overall_performance"]["constructive_feedback"],
-        "time_management": llm_evaluation["overall_performance"]["additional_notes"]["time_management"],
-        "other_observations": llm_evaluation["overall_performance"]["additional_notes"]["other_observations"]
-    }
-    
-    # Save evaluation to database
-    evaluation = crud_scenario.scenario_evaluation.create_evaluation(
-        db=db,
-        obj_in=evaluation_create_data
-    )
-
-    return evaluation
-
-@router.get("/ongoing-evaluation/{thread_id}")
-def ongoing_evaluation(
     thread_id: UUID,
+    evaluation_data: scenario.ClinicalPracticeEvaluationCreate,
     db: Session = Depends(deps.get_db),
     current_student=Depends(deps.get_current_active_student_user),
 ):
-    
-    # Check if the thread exists in the evaluation table
-    evaluation = crud_scenario.scenario_evaluation.get_by_thread_id(
+    # Get scenario and thread data
+    scenario_thread = crud_scenario.scenario_thread.get_by_id(
         db=db, scenario_thread_id=thread_id
     )
-        
+
+    if not scenario_thread:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
+        )
+
+    if scenario_thread.student_id != current_student.student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to view this thread",
+        )
+
+    # Check whether the evaluation already exists
+    evaluation = crud_scenario.scenario_evaluation.get_by_thread_id(
+        db=db, thread_id=thread_id
+    )
+
+    if evaluation:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Evaluation already exists for this thread",
+        )
+
+    scenario_data = crud_scenario.scenario.get_scenario_with_findings_by_scenario_id(
+        db=db, scenario_id=scenario_thread.scenario_id
+    )
+
+    thread_messages = crud_scenario.scenario_thread_message.get_multi_by_thread_id(
+        db=db, scenario_thread_id=thread_id
+    )
+
+    if len(thread_messages) <= 6:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Not enough messages"
+        )
+
+    try:
+        # Prepare evaluation data
+        llm_evaluation_data = {
+            "scenario_title": scenario_data.scenario_title,
+            "patient_age": scenario_data.patient_age,
+            "patient_gender": scenario_data.patient_gender,
+            "patient_chief_complaint": scenario_data.patient_chief_complaint,
+            "detailed_description": scenario_data.detailed_description,
+            "vital_signs": scenario_data.scenario_examination_findings.vital_signs,
+            "general_appearance": scenario_data.scenario_examination_findings.general_appearance,
+            "cardiovascular_findings": scenario_data.scenario_examination_findings.cardiovascular_findings,
+            "lungs_findings": scenario_data.scenario_examination_findings.lungs_findings,
+            "additional_findings": scenario_data.scenario_examination_findings.additional_findings,
+            "thread_messages": thread_messages,
+            "diagnosis": evaluation_data.diagnosis,
+            "treatment": evaluation_data.treatment,
+            "doctor_notes": evaluation_data.doctor_notes,
+        }
+
+        # Get evaluation from LLM
+        llm = ClinicalPracticeEvaluationLLM(
+            evaluation_data=llm_evaluation_data, scenario_thread_id=str(thread_id)
+        )
+
+        llm_evaluation = llm.evaluate_clinical_practice()
+
+        # Create evaluation data for database
+        evaluation_create_data = {
+            "thread_id": thread_id,
+            "conversation_relevance_of_replies_score": llm_evaluation[
+                "conversation_evaluation"
+            ]["relevance_of_replies_score"],
+            "conversation_medical_accuracy_of_replies_score": llm_evaluation[
+                "conversation_evaluation"
+            ]["medical_accuracy_of_replies_score"],
+            "conversation_communication_clarity_score": llm_evaluation[
+                "conversation_evaluation"
+            ]["communication_clarity_score"],
+            "conversation_empathy_and_professionalism_score": llm_evaluation[
+                "conversation_evaluation"
+            ]["empathy_and_professionalism_score"],
+            "conversation_constructive_feedback": llm_evaluation[
+                "conversation_evaluation"
+            ]["constructive_feedback"],
+            "diagnosis_relevance_score": llm_evaluation["diagnosis_evaluation"][
+                "relevance_score"
+            ],
+            "diagnosis_accuracy_score": llm_evaluation["diagnosis_evaluation"][
+                "accuracy_score"
+            ],
+            "diagnosis_constructive_feedback": llm_evaluation["diagnosis_evaluation"][
+                "constructive_feedback"
+            ],
+            "treatment_relevance_score": llm_evaluation["treatment_evaluation"][
+                "relevance_score"
+            ],
+            "treatment_effectiveness_score": llm_evaluation["treatment_evaluation"][
+                "effectiveness_score"
+            ],
+            "treatment_constructive_feedback": llm_evaluation["treatment_evaluation"][
+                "constructive_feedback"
+            ],
+            "notes_clarity_score": llm_evaluation["notes_evaluation"]["clarity_score"],
+            "notes_completeness_score": llm_evaluation["notes_evaluation"][
+                "completeness_score"
+            ],
+            "notes_constructive_feedback": llm_evaluation["notes_evaluation"][
+                "constructive_feedback"
+            ],
+            "overall_score": llm_evaluation["overall_performance"]["overall_score"],
+            "overall_constructive_feedback": llm_evaluation["overall_performance"][
+                "constructive_feedback"
+            ],
+            "time_management": llm_evaluation["overall_performance"][
+                "additional_notes"
+            ]["time_management"],
+            "other_observations": llm_evaluation["overall_performance"][
+                "additional_notes"
+            ]["other_observations"],
+        }
+
+        # Save evaluation to database
+        evaluation = crud_scenario.scenario_evaluation.create_evaluation(
+            db=db, obj_in=evaluation_create_data
+        )
+
+    except Exception as e:
+        print(f"Error in evaluate_clinical_practice: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while evaluating the clinical practice",
+        )
+
+    return evaluation
