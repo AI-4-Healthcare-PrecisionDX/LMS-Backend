@@ -327,6 +327,23 @@ def evaluate_clinical_practice(
             detail="Evaluation already exists for this thread",
         )
 
+    try:
+        update_thread = crud_scenario.scenario_thread.update(
+            db=db,
+            db_obj=scenario_thread,
+            obj_in={
+                "diagnosis": evaluation_data.diagnosis,
+                "treatment": evaluation_data.treatment,
+                "doctor_notes": evaluation_data.doctor_notes,
+            },
+        )
+    except Exception as e:
+        print(f"Error in update_thread: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while updating the thread",
+        )
+
     scenario_data = crud_scenario.scenario.get_scenario_with_findings_by_scenario_id(
         db=db, scenario_id=scenario_thread.scenario_id
     )
@@ -434,3 +451,54 @@ def evaluate_clinical_practice(
         )
 
     return evaluation
+
+
+@router.get("/{thread_id}/details", response_model=scenario.ThreadDetails)
+def get_thread_details(
+    thread_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_student=Depends(deps.get_current_active_student_user),
+):
+    # Get scenario and thread data
+    scenario_thread = crud_scenario.scenario_thread.get_by_id(
+        db=db, scenario_thread_id=thread_id
+    )
+
+    if not scenario_thread:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
+        )
+
+    if scenario_thread.student_id != current_student.student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not allowed to view this thread",
+        )
+
+    # Check whether the evaluation already exists
+    evaluation = crud_scenario.scenario_evaluation.get_by_thread_id(
+        db=db, thread_id=thread_id
+    )
+
+    if not evaluation:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Evaluation does not exist for this thread",
+        )
+
+    scenario_data = crud_scenario.scenario.get_scenario_with_findings_by_scenario_id(
+        db=db, scenario_id=scenario_thread.scenario_id
+    )
+
+    thread_messages = crud_scenario.scenario_thread_message.get_multi_by_thread_id(
+        db=db, scenario_thread_id=thread_id
+    )
+
+    response = scenario.ThreadDetails(
+        scenario=scenario_data,
+        thread=scenario_thread,
+        thread_messages=thread_messages,
+        evaluation=evaluation,
+    )
+
+    return response
