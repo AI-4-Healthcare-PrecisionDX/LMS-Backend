@@ -256,12 +256,13 @@ def read_department_scenarios(
         unevaluated_scenarios = crud_scenario.scenario.get_student_unevaluated_threads(
             db, student_id=current_user.student_id, department_id=department_id
         )
-
-        return scenario.ScenarioForStudentOutput(
+        response = scenario.ScenarioForStudentOutput(
             department_scenarios=department_scenarios,
             evaluated_scenarios=evaluated_scenarios,
             unevaluated_scenarios=unevaluated_scenarios,
         )
+
+        return response
     except Exception as e:
         print(e)
         raise HTTPException(
