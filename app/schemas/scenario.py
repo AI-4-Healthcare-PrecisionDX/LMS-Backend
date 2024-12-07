@@ -77,6 +77,9 @@ class ScenarioData(BaseModel):
 
 class ScenarioThreadBase(BaseModel):
     name: Optional[str] = None
+    doctor_notes: Optional[str] = None
+    diagnosis: Optional[str] = None
+    treatment: Optional[str] = None
 
 
 class ScenarioThreadCreate(ScenarioThreadBase):
@@ -135,7 +138,7 @@ class ScenarioData(BaseModel):
 class ClinicalPracticeEvaluationCreate(BaseModel):
     diagnosis: str
     treatment: str
-    doctor_notes: str
+    doctor_notes: Optional[str] = None
 
 
 class ScenarioEvaluationBase(BaseModel):
@@ -189,6 +192,9 @@ class ScenarioForStudent(BaseModel):
     patient_gender: Optional[str]
     patient_chief_complaint: Optional[str]
 
+    class Config:
+        from_attributes = True
+
 
 class StudentScenario(BaseModel):
     thread: ScenarioThread
@@ -199,3 +205,28 @@ class ScenarioForStudentOutput(BaseModel):
     department_scenarios: Optional[List[ScenarioForStudent]]
     evaluated_scenarios: Optional[List[StudentScenario]]
     unevaluated_scenarios: Optional[List[StudentScenario]]
+
+    class Config:
+        from_attributes = True
+
+
+class ScenarioWithDetailDescription(BaseModel):
+    scenario_id: uuid.UUID
+    scenario_title: Optional[str]
+    patient_name: str
+    patient_age: str
+    patient_chief_complaint: str
+    detailed_description: str
+
+    class Config:
+        from_attributes = True
+
+
+class ThreadDetails(BaseModel):
+    scenario: Optional[ScenarioWithDetailDescription]
+    thread: Optional[ScenarioThread]
+    thread_messages: Optional[List[ScenarioThreadMessage]]
+    evaluation: Optional[ScenarioEvaluation]
+
+    class Config:
+        from_attributes = True

@@ -19,6 +19,9 @@ class ScenarioThread(Base):
         index=True,
     )
     name = Column(String)
+    doctor_notes = Column(String, nullable=True)
+    diagnosis = Column(String, nullable=True)
+    treatment = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
 
