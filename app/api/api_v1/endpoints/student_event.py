@@ -19,12 +19,22 @@ def get_student_events(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_student: models.User = Depends(deps.get_current_active_student_user),
 ) -> Any:
     """
     Retrieve all student events.
     """
-    events = crud.student_event.get_multi(db, skip=skip, limit=limit)
+    try:
+        events = crud.student_event.get_multi_events(
+            db, student_id=current_student.student_id, skip=skip, limit=limit
+        )
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the student events",
+        )
+        
     return events
 
 
@@ -43,7 +53,6 @@ def create_student_event(
             db, obj_in=event_in, student_id=current_student.student_id
         )
     except Exception as e:
-        print(f"Error creating student event: {str(e)}")  # Log the specific error
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while creating the student event: {str(e)}",
@@ -57,12 +66,19 @@ def update_student_event(
     db: Session = Depends(deps.get_db),
     event_id: UUID,
     event_in: StudentEventUpdate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    curent_student: models.User = Depends(deps.get_current_active_student_user),
 ) -> Any:
     """
     Update a student event.
     """
-    event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id)
+    try:
+        event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id,student_id=curent_student.student_id)
+    except Exception as e:
+        print(f"Error retrieving student event: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the student event: {str(e)}",
+        )
 
     if not event:
         raise HTTPException(status_code=404, detail="Student event not found")
@@ -72,7 +88,6 @@ def update_student_event(
             db, db_obj=event, obj_in=event_in
         )
     except Exception as e:
-        print(f"Error updating student event: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while updating the student event: {str(e)}",
@@ -84,14 +99,23 @@ def update_student_event(
 def read_student_event(
     event_id: UUID,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_student: models.User = Depends(deps.get_current_active_student_user),
 ) -> Any:
     """
     Get a specific student event by ID.
     """
-    event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id)
+    try:
+        event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id, student_id=current_student.student_id)
+    except Exception as e:
+        print(f"Error retrieving student event: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the student event: {str(e)}",
+        )
+        
     if not event:
         raise HTTPException(status_code=404, detail="Student event not found")
+    
     return event
 
 
@@ -99,19 +123,28 @@ def read_student_event(
 def delete_student_event(
     event_id: UUID,
     db: Session = Depends(deps.get_db),
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_student: models.User = Depends(deps.get_current_active_student_user),
 ) -> Any:
     """
     Delete a student event.
     """
-    event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id)
+    
+    try:
+        event = crud.student_event.get_student_event_by_id(db=db, event_id=event_id,student_id=current_student.student_id)
+    except Exception as e:
+        print(f"Error retrieving student event: {str(e)}")
+        raise HTTPException(
+        status_code=500,
+        detail=f"An error occurred while retrieving the student event: {str(e)}",
+    )
+
     if not event:
         raise HTTPException(status_code=404, detail="Student event not found")
 
+    
     try:
-        crud.student_event.delete_student_event(db, event_id=event_id)
+        crud.student_event.delete_student_event(db, event_id=event_id, student_id = current_student.student_id)
     except Exception as e:
-        print(f"Error deleting student event: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while deleting the student event: {str(e)}",
