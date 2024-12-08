@@ -17,7 +17,6 @@ class StudentEventBase(BaseModel):
 
 class StudentEventCreate(StudentEventBase):
     event_title: str
-    event_description: str
     event_date: datetime
 
 

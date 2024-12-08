@@ -9,6 +9,19 @@ from uuid import UUID
 
 
 class CRUDStudentEvent(CRUDBase[StudentEvent, StudentEventCreate, StudentEventUpdate]):
+    
+    def get_multi_events(self, db: Session, *, student_id: str, skip: int = 0, limit: int = 100) -> List[StudentEvent]:
+        """
+        Retrieve all student events.
+        """
+        return (
+            db.query(StudentEvent)
+            .filter(StudentEvent.student_id == student_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
+        
     def create_student_event(self, db: Session, *, obj_in: StudentEventCreate, student_id: str) -> StudentEvent:
         """
         Create a new event for a student.
@@ -19,11 +32,11 @@ class CRUDStudentEvent(CRUDBase[StudentEvent, StudentEventCreate, StudentEventUp
         db.refresh(db_obj)
         return db_obj
 
-    def get_student_event_by_id(self, db: Session, event_id: UUID) -> StudentEvent | None:
+    def get_student_event_by_id(self, db: Session, event_id: UUID, student_id:UUID) -> StudentEvent | None:
         """
         Retrieve a student event by its event_id.
         """
-        return db.query(StudentEvent).filter(StudentEvent.event_id == event_id).first()
+        return db.query(StudentEvent).filter(StudentEvent.event_id == event_id, StudentEvent.student_id == student_id).first()
 
     def update_student_event(
         self, db: Session, *, db_obj: StudentEvent, obj_in: StudentEventUpdate
@@ -39,11 +52,11 @@ class CRUDStudentEvent(CRUDBase[StudentEvent, StudentEventCreate, StudentEventUp
         db.refresh(db_obj)
         return db_obj
 
-    def delete_student_event(self, db: Session, *, event_id: UUID) -> StudentEvent | None:
+    def delete_student_event(self, db: Session, *, event_id: UUID, student_id:UUID) -> StudentEvent | None:
         """
         Remove a student event by its event_id.
         """
-        obj = db.query(StudentEvent).filter(StudentEvent.event_id == event_id).first()
+        obj = db.query(StudentEvent).filter(StudentEvent.event_id == event_id,StudentEvent.student_id==student_id).first()
         if obj:
             db.delete(obj)
             db.commit()
