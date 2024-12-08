@@ -2,7 +2,7 @@ from typing import List, Optional
 from uuid import UUID
 from pydantic import BaseModel
 from datetime import datetime
-
+from .course import TemplateCourse
 
 
 class DepartmentBase(BaseModel):
@@ -15,22 +15,22 @@ class DepartmentBase(BaseModel):
         from_attributes = True
 
 
-class TemplateCourseBase(BaseModel):
-    template_course_id: UUID
-    template_name: str
-    template_description: str
-    template_year: str
-    course_outline: str
-    department_id: UUID
-    admin_id: UUID
-    created_at: datetime
-    updated_at: datetime
-    course_materials: List[dict]
-    branch_id: UUID
-    department: DepartmentBase
+# class TemplateCourseBase(BaseModel):
+#     template_course_id: UUID
+#     template_name: str
+#     template_description: str
+#     template_year: str
+#     course_outline: str
+#     department_id: UUID
+#     admin_id: UUID
+#     created_at: datetime
+#     updated_at: datetime
+#     course_materials: List[dict]
+#     branch_id: UUID
+#     department: DepartmentBase
 
-    class Config:
-        from_attributes = True
+#     class Config:
+#         from_attributes = True
 
 
 
@@ -102,7 +102,7 @@ class AssignmentWithDetails(AssignmentBase):
     assignment_materials: List[AssignmentMaterialBase] = []
 
 class SectionCombinedResponse(BaseModel):
-    template_course: TemplateCourseBase
+    template_course: TemplateCourse
     announcements: List[AnnouncementBase]
     section_exclusive_contents: List[SectionExclusiveContentBase]
     assignments: List[AssignmentWithDetails]

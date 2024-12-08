@@ -20,9 +20,4 @@ def get_combined_section_data(
     if not result:
         raise HTTPException(status_code=403, detail="Student isn't a member of this section or Section data not found")
 
-    return SectionCombinedResponse(
-        announcements=result["announcements"],
-        section_exclusive_contents=result["section_exclusive_contents"],
-        template_course=result["template_course"],
-        assignments=result["assignments"],
-    )
+    return result
