@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session, joinedload
 from app.models.section import Section as SectionModel
 from app.models.section_members import SectionMembers
-
+from app.models.template_course import TemplateCourse
 
 
 def get_section_combined_data(db: Session, section_id: UUID, student_id: UUID):
@@ -22,7 +22,7 @@ def get_section_combined_data(db: Session, section_id: UUID, student_id: UUID):
         .options(
             joinedload(SectionModel.announcements),
             joinedload(SectionModel.section_exclusive_contents),
-            joinedload(SectionModel.template_course)
+            joinedload(SectionModel.template_course).joinedload(TemplateCourse.course_materials)
         )
         .first()
     )
@@ -31,9 +31,4 @@ def get_section_combined_data(db: Session, section_id: UUID, student_id: UUID):
         return None
 
     
-    return {
-        "announcements": section.announcements,
-        "section_exclusive_contents": section.section_exclusive_contents,
-        "template_course": section.template_course,
-        "assignments": section.assignments, 
-    }
+    return section

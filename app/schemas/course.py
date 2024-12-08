@@ -44,7 +44,6 @@ class TemplateCourseInDBBase(TemplateCourseBase):
     admin_id: UUID
     created_at: datetime
     updated_at: datetime
-    # template_course_access: List[TeacherAccess] = []
     course_materials: List[CourseMaterial] = []
     branch_id: UUID
     
