@@ -147,8 +147,8 @@ class CRUDDepartment(CRUDBase[Department, DepartmentCreate, DepartmentUpdate]):
             update_data = obj_in.model_dump(exclude_unset=True)
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
-    def delete_department(self, db: Session, *, id: UUID) -> Department:
-        department = db.query(Department).filter(Department.department_id == id).first()
+    def delete_department(self, db: Session, *, department_id: UUID) -> Department:
+        department = db.query(Department).filter(Department.department_id == department_id).first()
         db.delete(department)
         db.commit()
         return department

@@ -84,19 +84,7 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         obj_in: TemplateCourseUpdate | Dict[str, Any],
         user_id: UUID
     ) -> TemplateCourse:
-        """
-        Update a template course with only the fields provided in obj_in.
-        Preserves existing values for fields not included in the update.
-        
-        Args:
-            db: Database session
-            db_obj: Existing TemplateCourse object from database
-            obj_in: Update data (either Pydantic model or dict)
-            user_id: ID of user performing the update
-        
-        Returns:
-            Updated TemplateCourse object
-        """
+
         # Convert input to dictionary if it's a Pydantic model
         if isinstance(obj_in, dict):
             update_data = obj_in.copy()
@@ -132,42 +120,13 @@ class CRUDTemplateCourse(CRUDBase[TemplateCourse, TemplateCourseCreate, Template
         
         return db_obj
     
-    def delete_course(self, db: Session, *, id: UUID) -> Dict[str, Any]:
+    def delete_course(self, db: Session, *, id: UUID):
         course = self.get_course_by_id(db=db, id=id)
-        if not course:
-            raise ValueError("Course not found")
-            
-        # Delete associated records first
-        # db.query(TemplateCourseAccess).filter(
-        #     TemplateCourseAccess.template_course_id == id
-        # ).delete()
         
-        db.query(CourseMaterials).filter(
-            CourseMaterials.template_course_id == id
-        ).delete()
-        
-        # Delete the course
         db.delete(course)
         db.commit()
-        return {"message": "Course and associated records deleted successfully"}
-    
-    # def check_if_teacher_has_access(self, db: Session, *, template_course_id: UUID, user_id: UUID) -> bool:
-    #     try:
-    #         teacher = user.get_teacher_by_user_id(db=db, id=user_id)
-    #         if not teacher:
-    #             HTTPException(status_code=404, detail="Teacher not found")
-    #     except Exception as e:
-    #         raise HTTPException(status_code=500, detail=str(e))
         
-    #     try:
-    #         template_course_access = db.query(TemplateCourseAccess).filter(
-    #             TemplateCourseAccess.template_course_id == template_course_id,
-    #             TemplateCourseAccess.teacher_id == teacher.teacher_id
-    #         ).first()
-    #     except Exception as e:
-    #         raise HTTPException(status_code=500, detail=str(e))
-        
-    #     return True if template_course_access else False
+        return course
     
     
     

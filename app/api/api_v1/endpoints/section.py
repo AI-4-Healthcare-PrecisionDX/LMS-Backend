@@ -20,16 +20,20 @@ def get_sections(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: models.User = Depends(deps.get_current_active_admin_user),
 ) -> Any:
     """Get all sections (admin only)"""
-    if current_user.role != "admin":
+
+
+    try:
+        sections = crud.section.get_multi(db, skip=skip, limit=limit)
+    except Exception as e:
         raise HTTPException(
-            status_code=403,
-            detail="Only admins can access all sections"
+            status_code=500,
+            detail=f"An error occurred while retrieving sections: {str(e)}"
         )
         
-    sections = crud.section.get_multi(db, skip=skip, limit=limit)
+    #filter the sections that  
     return sections
 
 @router.get("/teacher", response_model=List[SectionSchema])

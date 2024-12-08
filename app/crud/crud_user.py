@@ -291,6 +291,15 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
 
     def is_superuser(self, user: User) -> bool:
         return user.is_superuser
+    
+    def delete_user(self, db: Session, *, user_id: UUID):
+        
+        user = self.get_by_id(db, id=user_id)
+
+        db.delete(user)
+        db.commit()
+        return user
+    
 
 
 user = CRUDUser(User)
