@@ -196,6 +196,7 @@ def get_teacher_by_id(
     return teacher
 
 
+
 @router.put("/update-teacher", response_model=schemas.Teacher)
 def update_teacher(
     *,
@@ -225,6 +226,29 @@ def update_teacher(
             detail="An error occurred while updating the user",
         )
     return user
+
+
+#delete teacher
+@router.delete("/delete-teacher/{teacher_id}")
+def delete_teacher(
+    teacher_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> dict:
+    """
+    Delete a teacher.
+    """
+    try:
+        teacher = crud.user.get_teacher_by_id(db, id=teacher_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the teacher",
+        )
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher not found")
+    crud.user.delete_user(db, user_id=teacher.user_id)
+    return {"detail": "Teacher deleted successfully"}
 
 
 @router.post("/create-student", response_model=schemas.Student)
@@ -341,6 +365,38 @@ def update_student(
             detail="An error occurred while updating the user",
         )
     return user
+
+
+#delete student
+@router.delete("/delete-student/{student_id}")
+def delete_student(
+    student_id: UUID,
+    db: Session = Depends(deps.get_db),
+    current_user: models.user.User = Depends(deps.get_current_active_admin_user),
+) -> dict:
+    """
+    Delete a student.
+    """
+    try:
+        student = crud.user.get_student_by_id(db, id=student_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the student",
+        )
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    try:
+        crud.user.delete_user(db, user_id=student.user_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while deleting the student",
+        )
+        
+    return {"detail": "Student deleted successfully"}
+
 
 
 # Create a new department
@@ -464,6 +520,41 @@ def update_department(
         db, db_obj=department, obj_in=department_in
     )
     return department
+
+
+#delete department
+@router.delete("/delete-department/{department_id}")
+def delete_department(
+    department_id: str,
+    db: Session = Depends(deps.get_db),
+    current_user: models.User = Depends(deps.get_current_active_admin_user),
+) -> dict:
+    """
+    Delete a department.
+    """
+
+    try:
+        department = crud.department.get_department_by_id(
+            db, department_id=department_id, branch_id=current_user.branch_id
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while retrieving the department",
+        )
+    if department is None:
+        raise HTTPException(status_code=404, detail="Department not found")
+    
+    try:
+        crud.department.delete_department(db, department_id=department_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail="An error occurred while deleting the department",
+        )
+        
+    return {"detail": "Department deleted successfully"}
+
 
 
 @router.post("/create_scenario")

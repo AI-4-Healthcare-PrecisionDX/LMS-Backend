@@ -33,7 +33,6 @@ class TemplateCourseCreate(TemplateCourseBase):
     template_description: Optional[str] = None
     template_year: Optional[str] = None
     course_outline: Optional[str] = None
-    # template_course_access: Optional[List[UUID]] = None  # List of teacher IDs
     course_materials: Optional[List[UUID]] = None  # List of library_item_ids
 
 class TemplateCourseUpdate(TemplateCourseBase):
