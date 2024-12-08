@@ -14,7 +14,7 @@ from app.schemas.student_event import (
 router = APIRouter()
 
 
-@router.get("/", response_model=List[StudentEvent])
+@router.get("", response_model=List[StudentEvent])
 def get_student_events(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
@@ -38,7 +38,7 @@ def get_student_events(
     return events
 
 
-@router.post("/create-student-event", response_model=StudentEvent)
+@router.post("", response_model=StudentEvent)
 def create_student_event(
     *,
     db: Session = Depends(deps.get_db),
@@ -60,7 +60,7 @@ def create_student_event(
     return event
 
 
-@router.put("/update-student-event/{event_id}", response_model=StudentEvent)
+@router.put("/{event_id}", response_model=StudentEvent)
 def update_student_event(
     *,
     db: Session = Depends(deps.get_db),
@@ -95,7 +95,7 @@ def update_student_event(
     return updated_event
 
 
-@router.get("/get-student-event/{event_id}", response_model=StudentEvent)
+@router.get("/{event_id}", response_model=StudentEvent)
 def read_student_event(
     event_id: UUID,
     db: Session = Depends(deps.get_db),
@@ -119,7 +119,7 @@ def read_student_event(
     return event
 
 
-@router.delete("/delete-student-event/{event_id}")
+@router.delete("/{event_id}")
 def delete_student_event(
     event_id: UUID,
     db: Session = Depends(deps.get_db),
