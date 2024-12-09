@@ -24,9 +24,8 @@ def get_sections(
 ) -> Any:
     """Get all sections (admin only)"""
 
-
     try:
-        sections = crud.section.get_multi(db, skip=skip, limit=limit)
+        sections = crud.section.get_multi(db, skip=skip, limit=limit, branch_id=current_user.branch_id)
     except Exception as e:
         raise HTTPException(
             status_code=500,
@@ -45,9 +44,16 @@ def get_teacher_sections(
 ) -> Any:
     """Get all sections for the current teacher"""
 
-    sections = crud.section.get_sections_by_teacher(
+    try:
+        sections = crud.section.get_sections_by_teacher(
         db=db, teacher_id=current_teacher.teacher_id, skip=skip, limit=limit
     )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving sections: {str(e)}"
+        )
+        
     return sections
 
 @router.post("/create", response_model=SectionSchema)
@@ -55,41 +61,40 @@ def create_section(
     *,
     db: Session = Depends(deps.get_db),
     section_in: SectionCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: models.User = Depends(deps.get_current_active_admin_user),
 ) -> Any:
 
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can create sections"
-        )
 
     # Verify course exists
     try:
         course = crud.template_course.get_course_by_id(db=db, id=section_in.template_course_id)
-        if not course:
-            raise HTTPException(
-                status_code=404,
-                detail="Course not found"
-            )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while verifying the course: {str(e)}"
         )
-        
+    
+    if not course:
+        raise HTTPException(
+            status_code=404,
+            detail="Course not found"
+        )
+            
     # verify teacher exists
     try:
         teacher = crud.user.get_teacher_by_id(db=db, id=section_in.teacher_id)
-        if not teacher:
-            raise HTTPException(
-                status_code=404,
-                detail="Teacher not found"
-            )
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while verifying the teacher: {str(e)}"
+        )
+    
+    if not teacher:
+        raise HTTPException(
+            status_code=404,
+            detail="Teacher not found"
         )
 
 
@@ -116,29 +121,26 @@ def update_section(
     db: Session = Depends(deps.get_db),
     section_id: UUID,
     section_in: SectionUpdate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: models.User = Depends(deps.get_current_active_admin_user),
 ) -> Any:
     """
     Update a section (Only for teachers who own the section).
     Note: Section code cannot be updated as it is automatically generated.
     """
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Only admins can update sections"
-        )
 
     try:
         section = crud.section.get_section_by_id(db=db, id=section_id)
-        if not section:
-            raise HTTPException(
-                status_code=404,
-                detail="Section not found"
-            )
+        
     except Exception as e:
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
+    if not section:
+        raise HTTPException(
+            status_code=404,
+            detail="Section not found"
         )
 
     try:
@@ -167,7 +169,14 @@ def get_section(
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
 
-    section = crud.section.get_section_by_id(db=db, id=section_id)
+    try:
+        section = crud.section.get_section_by_id(db=db, id=section_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
     if not section:
         raise HTTPException(
             status_code=404,
@@ -177,7 +186,13 @@ def get_section(
     if current_user.role == "admin":
         return section
         
-    teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+    try:
+        teacher = crud.user.get_teacher_by_user_id(db=db, id=current_user.user_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while verifying the teacher: {str(e)}"
+        )
 
     if current_user.role == "teacher" or current_user.role == "admin":
         # Check if the teacher owns the section
@@ -204,16 +219,19 @@ def delete_section(
     *,
     db: Session = Depends(deps.get_db),
     section_id: UUID,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: models.User = Depends(deps.get_current_active_admin_user),
 ) -> Any:
 
-    if current_user.role != "admin":
+
+        
+    try:
+        section = crud.section.get_section_by_id(db=db, id=section_id)
+    except Exception as e:
         raise HTTPException(
-            status_code=403,
-            detail="Only admins can delete sections"
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
         )
         
-    section = crud.section.get_section_by_id(db=db, id=section_id)
     if not section:
         raise HTTPException(
             status_code=404,
@@ -242,7 +260,14 @@ def get_section_contents(
 ) -> Any:
 
     # First check if section exists
-    section = crud.section.get_section_by_id(db=db, id=section_id)
+    try:
+        section = crud.section.get_section_by_id(db=db, id=section_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
     if not section:
         raise HTTPException(
             status_code=404,
@@ -285,7 +310,14 @@ def add_section_content(
     Add exclusive content to a section.
     Only teachers who own the section or admins can add content.
     """
-    section = crud.section.get_section_by_id(db=db, id=content.section_id)
+    try:
+        section = crud.section.get_section_by_id(db=db, id=content.section_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
 
@@ -300,7 +332,14 @@ def add_section_content(
         )
 
     # Check if library item exists
-    library_item = crud.library.get_by_uuid(db=db, library_id=content.library_item_id)
+    try:
+        library_item = crud.library.get_by_uuid(db=db, library_id=content.library_item_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the library item: {str(e)}"
+        )
+        
     if not library_item:
         raise HTTPException(status_code=404, detail="Library item not found")
 
@@ -330,7 +369,14 @@ def remove_section_content(
     Remove exclusive content from a section.
     Only teachers who own the section or admins can remove content.
     """
-    section = crud.section.get_section_by_id(db=db, id=section_id)
+    try:
+        section = crud.section.get_section_by_id(db=db, id=section_id)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
     if not section:
         raise HTTPException(status_code=404, detail="Section not found")
 
