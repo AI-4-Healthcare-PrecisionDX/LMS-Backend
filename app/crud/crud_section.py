@@ -25,10 +25,12 @@ from app.crud.crud_user import user
 from sqlalchemy.exc import SQLAlchemyError
 
 class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
-    def get_multi(self, db: Session, *, skip=0, limit=100) -> List[SectionModel]:
+    def get_multi(self, db: Session, *, skip=0, limit=100, branch_id: UUID) -> List[SectionModel]:
         """Get multiple sections with pagination"""
         return (
             db.query(SectionModel)
+            .join(SectionModel.template_course)
+            .filter(TemplateCourse.branch_id == branch_id)
             .options(
                 joinedload(SectionModel.teacher).joinedload(Teacher.user),
                 joinedload(SectionModel.template_course),
@@ -39,14 +41,7 @@ class CRUDSection(CRUDBase[SectionModel, SectionCreate, SectionUpdate]):
             .all()
         )
 
-    # def get_teacher_course_access(self, db: Session, *, teacher_id: UUID) -> List[UUID]:
-    #     """Get all course IDs that the teacher has access to"""
-    #     course_access = (
-    #         db.query(TemplateCourseAccess.template_course_id)
-    #         .filter(TemplateCourseAccess.teacher_id == teacher_id)
-    #         .all()
-    #     )
-    #     return [access[0] for access in course_access]
+
 
     def generate_section_code(self, db: Session, template_course_id: UUID) -> str:
         """Generate a unique section code based on course"""

@@ -63,6 +63,10 @@ def upload_file(
             detail="An error occurred while uploading. Please try again.",
         )
 
+    if current_user.role == "admin":
+        visibility = True
+        
+        
     library_in = schemas.LibraryCreate(
         material_type=material_type,
         material_title=material_title,
