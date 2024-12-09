@@ -29,7 +29,8 @@ class StudentEventUpdate(StudentEventBase):
 
 class StudentEventInDBBase(StudentEventBase):
     event_id: Optional[UUID] = UUID  
-    student_id: Optional[UUID] = UUID  
+    student_id: Optional[UUID] = UUID 
+    is_completed: Optional[bool] = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
