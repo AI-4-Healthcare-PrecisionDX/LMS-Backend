@@ -22,6 +22,7 @@ class StudentEventCreate(StudentEventBase):
 
 
 class StudentEventUpdate(StudentEventBase):
+    is_completed: Optional[bool] = False
     pass
 
 
