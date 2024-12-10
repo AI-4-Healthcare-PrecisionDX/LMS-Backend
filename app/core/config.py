@@ -54,6 +54,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: str
     OPENAI_MODEL: str
     OPENAI_MODEL_CLINICAL_PRACTICE: str
+    
+    ANTHROPIC_API_KEY : str
+    ANTHROPIC_MODEL : str
 
     IS_DEV: bool = True
 
