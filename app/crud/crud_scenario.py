@@ -281,6 +281,7 @@ class CRUDScenarioThreadMessage(
             .order_by(ScenarioThreadMessage.created_at)
             .all()
         )
+        
 
     def create_by_thread_id(
         self,

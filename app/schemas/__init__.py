@@ -115,3 +115,16 @@ from .scenario import (
     ClinicalPracticeEvaluationCreate,
     
 )
+
+from .assignment_submission import (
+    AssignmentSubmissionBase,
+    AssignmentSubmissionCreate,
+    AssignmentSubmissionUpdate,
+    AssignmentSubmissionAnswerBase,
+    AssignmentSubmissionAnswerCreate,
+    AssignmentSubmissionAnswerUpdate,
+    AssignmentSubmissionAnswerInDB,
+    AssignmentSubmissionAnswer,
+    AssignmentSubmissionInDB,
+    AssignmentSubmission,
+)

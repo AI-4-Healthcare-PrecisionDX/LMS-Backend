@@ -18,15 +18,16 @@ from app.prompt import ClinicalPracticeEvaluationPrompt
 from app.schemas.llm import EvaluationOutput
 from app.data import assignment_question_generate as assignment
 import logging
+from langchain_anthropic import ChatAnthropic
 
 logging.basicConfig(level=logging.INFO)
 
 
 class ClinicalPracticeEvaluationLLM:
     def __init__(self, evaluation_data, scenario_thread_id):
-        self.llm = ChatOpenAI(
-            api_key=settings.OPENAI_API_KEY,
-            model=settings.OPENAI_MODEL,
+        self.llm = ChatAnthropic(
+            api_key=settings.ANTHROPIC_API_KEY,
+            model=settings.ANTHROPIC_MODEL,
             temperature=0,
         )
         self.scenario_thread_id = scenario_thread_id
@@ -34,7 +35,7 @@ class ClinicalPracticeEvaluationLLM:
         self.evaluation_prompt = ClinicalPracticeEvaluationPrompt()
 
         self.output_parser = PydanticOutputParser(pydantic_object=EvaluationOutput)
-        self.embeddings = OpenAIEmbeddings()
+        # self.embeddings = OpenAIEmbeddings()
         self.evaluation_data = evaluation_data
 
     def evaluate_clinical_practice(self):
@@ -56,7 +57,7 @@ class ClinicalPracticeEvaluationLLM:
                 "run_name": "chat_evaluation",
                 "tags": [
                     "chat_evaluation",
-                    settings.OPENAI_MODEL,
+                    settings.ANTHROPIC_MODEL,
                 ],
                 "metadata": {
                     "langfuse_session_id": str(self.scenario_thread_id),

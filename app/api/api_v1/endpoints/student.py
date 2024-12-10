@@ -9,6 +9,18 @@ from app.schemas.section import (
     Section,
 
 ) 
+from app.schemas.assignment_submission import (
+    AssignmentSubmissionBase,
+    AssignmentSubmissionCreate,
+    AssignmentSubmissionUpdate,
+    AssignmentSubmissionAnswerBase,
+    AssignmentSubmissionAnswerCreate,
+    AssignmentSubmissionAnswerUpdate,
+    AssignmentSubmissionAnswerInDB,
+    AssignmentSubmissionAnswer,
+    AssignmentSubmissionInDB,
+    AssignmentSubmission
+)
 
 router = APIRouter()
 
@@ -49,3 +61,28 @@ def get_sections(
         raise HTTPException(status_code=400, detail=str(e))
     
     return sections
+
+
+
+
+# #create and endpoint for assignment submission
+# @router.post("/submit-assignment")
+# def submit_assignment(
+#     *,
+#     db: Session = Depends(deps.get_db),
+#     assignment_submission_in: ,
+#     current_student: models.User = Depends(deps.get_current_active_student_user),
+# ) -> Any:
+#     """
+#     Submit an assignment.
+#     """
+    
+#     try:
+#         assignment_submission = crud.assignment_submission.create(
+#             db, obj_in=assignment_submission_in, student_id=current_student.student_id
+#         )
+#         return assignment_submission
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
+    
+#     return assignment_submission

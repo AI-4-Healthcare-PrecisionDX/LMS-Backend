@@ -43,6 +43,22 @@ def get_announcements_for_section(
     """
     Get all announcements for a specific section.
     """
+    
+    try:
+        section = crud.section.get_section_by_id(db=db, id=section_id)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
+    if not section:
+        raise HTTPException(
+            status_code=404,
+            detail="Section not found"
+        )
+        
     try:
         announcements = crud.announcement.get_all_announcements_for_section(db,skip=skip, limit=limit, teacher_id=current_teacher.teacher_id, section_id=section_id)
         return announcements
@@ -62,6 +78,22 @@ def create_announcement(
     """
     Create new announcement.
     """
+    
+    try:
+        section = crud.section.get_section_by_id(db=db, id=section_id)
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while retrieving the section: {str(e)}"
+        )
+        
+    if not section:
+        raise HTTPException(
+            status_code=404,
+            detail="Section not found"
+        )
+        
     try:
         announcement = crud.announcement.create_announcement(db=db, announcement_in=announcement_in, teacher_id=current_teacher.teacher_id, section_id=section_id)
         return announcement
@@ -104,7 +136,16 @@ def delete_announcement(
     """
     Delete an announcement.
     """
-
+    try:
+        announcement = crud.announcement.get_announcement_by_id(db=db, announcement_id=announcement_id)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    if announcement.teacher_id != current_teacher.teacher_id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    
     try:
         crud.announcement.delete_announcement(db=db, announcement_id=announcement_id, teacher_id=current_teacher.teacher_id)
         return {"message": "Announcement deleted successfully"}

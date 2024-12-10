@@ -356,6 +356,14 @@ def evaluate_clinical_practice(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Not enough messages"
         )
+    
+    conversation = []
+    
+    for message in thread_messages:
+        if message.role == "doctor":
+            conversation.append({"role": "doctor", "content": message.content})
+        elif message.role == "patient":
+            conversation.append({"role": "patient", "content": message.content})
 
     try:
         # Prepare evaluation data
@@ -370,7 +378,7 @@ def evaluate_clinical_practice(
             "cardiovascular_findings": scenario_data.scenario_examination_findings.cardiovascular_findings,
             "lungs_findings": scenario_data.scenario_examination_findings.lungs_findings,
             "additional_findings": scenario_data.scenario_examination_findings.additional_findings,
-            "thread_messages": thread_messages,
+            "thread_messages": conversation,
             "diagnosis": evaluation_data.diagnosis,
             "treatment": evaluation_data.treatment,
             "doctor_notes": evaluation_data.doctor_notes,
