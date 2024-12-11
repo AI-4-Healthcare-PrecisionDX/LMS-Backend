@@ -621,3 +621,5 @@ def get_all_scenarios(
             status_code=500,
             detail="An error occurred while retrieving the scenarios",
         )
+
+
