@@ -22,7 +22,7 @@ class UserCreate(UserBase):
 
 
 class UserCreateStudent(UserCreate):
-    metric_id: Optional[str] = None
+    matric_id: Optional[str] = None
 
 
 class UserCreateTeacher(UserCreate):
@@ -58,7 +58,7 @@ class UserInDBBase(UserBase):
 
 class UserInDBStudent(UserInDBBase):
     student_id: UUID
-    metric_id: str
+    matric_id: str
 
 
 class Student(UserInDBStudent):
