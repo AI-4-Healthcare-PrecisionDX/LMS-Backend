@@ -62,8 +62,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db_obj = self.create(db, obj_in=obj_in)
         db_obj.role = "admin"
         db_obj.branch_id = branch_id
-        db.commit()
-        db.refresh(db_obj)
+        # db.commit()
+        # db.refresh(db_obj)
 
         admin = Admin(user_id=db_obj.user_id)
         db.add(admin)
@@ -82,8 +82,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db_obj = self.create(db, obj_in=obj_in)
         db_obj.role = "teacher"
         db_obj.branch_id = branch_id
-        db.commit()
-        db.refresh(db_obj)
+        # db.commit()
+        # db.refresh(db_obj)
 
         teacher = Teacher(user_id=db_obj.user_id)
         db.add(teacher)
@@ -102,8 +102,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         db_obj = self.create(db, obj_in=obj_in)
         db_obj.role = "student"
         db_obj.branch_id = branch_id
-        db.commit()
-        db.refresh(db_obj)
+        # db.commit()
+        # db.refresh(db_obj)
 
         student = Student(user_id=db_obj.user_id, metric_id=obj_in.metric_id)
         db.add(student)
