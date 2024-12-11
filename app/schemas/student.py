@@ -9,13 +9,13 @@ from datetime import datetime
 
 class StudentBase(BaseModel):
     enrollment_year: Optional[int] = None
-    metric_id: Optional[str] = None
+    matric_id: Optional[str] = None
 
 
 
 class StudentCreate(StudentBase):
     enrollment_year: int
-    metric_id: str
+    matric_id: str
 
 
 

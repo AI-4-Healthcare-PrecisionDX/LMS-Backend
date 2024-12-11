@@ -17,7 +17,7 @@ class Student(Base):
         unique=True,
         index=True,
     )
-    metric_id = Column(String, nullable=False)
+    matric_id = Column(String, nullable=False)
     updated_at = Column(DateTime, default=datetime.datetime.utcnow)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
