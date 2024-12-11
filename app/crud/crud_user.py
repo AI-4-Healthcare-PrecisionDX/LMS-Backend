@@ -96,22 +96,27 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
     def create_student_by_admin(
         self, db: Session, *, obj_in: UserCreateStudent, branch_id: UUID
     ) -> User:
-        unique_username = (
+        try:
+            unique_username = (
             f"{obj_in.first_name.lower()}_{obj_in.last_name.lower()}_{uuid4().hex[:5]}"
         )
-        db_obj = self.create(db, obj_in=obj_in)
-        db_obj.role = "student"
-        db_obj.branch_id = branch_id
-        # db.commit()
-        # db.refresh(db_obj)
+            db_obj = self.create(db, obj_in=obj_in)
+            db_obj.role = "student"
+            db_obj.branch_id = branch_id
+            db.flush()
+            # db.commit()
+            # db.refresh(db_obj)
+            
+            student = Student(user_id=db_obj.user_id, metric_id=obj_in.metric_id)
+            db.add(student)
+            db.commit()
+            db.refresh(student)
 
-        student = Student(user_id=db_obj.user_id, metric_id=obj_in.metric_id)
-        db.add(student)
-        db.commit()
-        db.refresh(student)
-
-        result = db.query(User).filter(User.user_id == db_obj.user_id).first()
-        return result
+            result = db.query(User).filter(User.user_id == db_obj.user_id).first()
+            return result
+        except Exception as e:
+            print(e)
+            return None
 
     def get_admin_by_user_id(
         self, db: Session, *, user_id: UUID
