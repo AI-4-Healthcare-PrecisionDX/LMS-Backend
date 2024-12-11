@@ -133,6 +133,10 @@ class ScenarioData(BaseModel):
     scenario: ScenarioCreate
     scenario_examination_findings: ScenarioExaminationFindingCreate
     department_id: uuid.UUID
+    
+class ScenarioUpdateData(BaseModel):
+    scenario: Optional[ScenarioUpdate] = None
+    scenario_examination_findings: Optional[ScenarioExaminationFindingUpdate] = None
 
 
 class ClinicalPracticeEvaluationCreate(BaseModel):
