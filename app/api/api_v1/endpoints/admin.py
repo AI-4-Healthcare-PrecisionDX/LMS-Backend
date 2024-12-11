@@ -623,3 +623,94 @@ def get_all_scenarios(
         )
 
 
+
+
+@router.put("/update_scenario/{scenario_id}")
+def update_scenario(
+    scenario_id: UUID,
+    scenario_data: schemas.scenario.ScenarioUpdateData,
+    db=Depends(deps.get_db),
+    current_user=Depends(deps.get_current_active_user),
+):
+    """
+    Update an existing scenario and/or its examination findings.
+    Only admin users can perform this action.
+    Allows partial updates by making all fields optional.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+
+    # First, check if the scenario exists
+    existing_scenario = crud.crud_scenario.scenario.get_by_id(
+        db, scenario_id=str(scenario_id)
+    )
+    if not existing_scenario:
+        raise HTTPException(
+            status_code=404, detail="Scenario not found"
+        )
+
+    try:
+        # Update scenario if scenario data is provided
+        if scenario_data.scenario:
+            updated_scenario = crud.crud_scenario.scenario.update(
+                db, 
+                db_obj=existing_scenario, 
+                obj_in=scenario_data.scenario
+            )
+
+        # Update scenario examination findings if data is provided
+        if scenario_data.scenario_examination_findings:
+            existing_examination = crud.crud_scenario.scenario_examination_finding.get_by_scenario_id(
+                db, scenario_id=str(scenario_id)
+            )
+            if existing_examination:
+                updated_examination = crud.crud_scenario.scenario_examination_finding.update(
+                    db, 
+                    db_obj=existing_examination, 
+                    obj_in=scenario_data.scenario_examination_findings
+                )
+
+        return {"detail": "Scenario updated successfully"}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while updating the scenario: {str(e)}"
+        )
+
+@router.delete("/delete_scenario/{scenario_id}")
+def delete_scenario(
+    scenario_id: UUID,
+    db=Depends(deps.get_db),
+    current_user=Depends(deps.get_current_active_user),
+):
+    """
+    Delete an existing scenario.
+    Only admin users can perform this action.
+    """
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403, detail="Only admins can perform this action"
+        )
+
+    # First, check if the scenario exists
+    existing_scenario = crud.crud_scenario.scenario.get_by_id(
+        db, scenario_id=str(scenario_id)
+    )
+    if not existing_scenario:
+        raise HTTPException(
+            status_code=404, detail="Scenario not found"
+        )
+
+    try:
+        # Delete the scenario (cascade delete will handle related records)
+        crud.crud_scenario.scenario.remove(db, id=scenario_id)
+        return {"detail": "Scenario deleted successfully"}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting the scenario: {str(e)}"
+        )
