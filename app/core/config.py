@@ -44,8 +44,10 @@ class Settings(BaseSettings):
     PGADMIN_DEFAULT_EMAIL: EmailStr
     PGADMIN_DEFAULT_PASSWORD: str
 
-    GOOGLE_APPLICATION_CREDENTIALS: str
-    GOOGLE_STORAGE_BUCKET: str
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
+    AWS_S3_BUCKET: str
 
     LANGFUSE_SECRET_KEY: str
     LANGFUSE_PUBLIC_KEY: str
@@ -59,6 +61,11 @@ class Settings(BaseSettings):
     # ANTHROPIC_MODEL : str
 
     IS_DEV: bool = True
+
+    LANGSMITH_TRACING: bool
+    LANGSMITH_ENDPOINT: str
+    LANGSMITH_API_KEY: str
+    LANGSMITH_PROJECT: str
 
     model_config = SettingsConfigDict(env_file=".env")
 

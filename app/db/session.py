@@ -5,6 +5,7 @@ from app.core.config import settings
 from contextlib import contextmanager
 import time  # Add this import for time.sleep()
 
+# print(settings.SQLALCHEMY_DATABASE_URI)
 if settings.IS_DEV:
     engine = create_engine(settings.SQLALCHEMY_DATABASE_URI, pool_pre_ping=True)
     SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

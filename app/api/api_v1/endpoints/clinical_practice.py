@@ -368,7 +368,6 @@ def evaluate_clinical_practice(
     try:
         # Prepare evaluation data
         llm_evaluation_data = {
-            "scenario_title": scenario_data.scenario_title,
             "patient_age": scenario_data.patient_age,
             "patient_gender": scenario_data.patient_gender,
             "patient_chief_complaint": scenario_data.patient_chief_complaint,
@@ -386,7 +385,7 @@ def evaluate_clinical_practice(
 
         # Get evaluation from LLM
         llm = ClinicalPracticeEvaluationLLM(
-            evaluation_data=llm_evaluation_data, scenario_thread_id=str(thread_id)
+            evaluation_data=llm_evaluation_data, scenario_thread_id=str(thread_id), scenario_title=scenario_data.scenario_title
         )
 
         llm_evaluation = llm.evaluate_clinical_practice()

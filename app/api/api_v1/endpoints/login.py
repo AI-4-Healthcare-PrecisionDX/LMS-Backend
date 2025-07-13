@@ -27,6 +27,7 @@ def login_access_token(
             db, email=form_data.username, password=form_data.password
         )
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail="Internal Server Error")
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")

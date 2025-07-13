@@ -13,7 +13,6 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
-from google.cloud import storage
 import uuid
 from io import BytesIO
 
