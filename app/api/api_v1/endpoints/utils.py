@@ -13,7 +13,8 @@ from fastapi import (
 from fastapi.encoders import jsonable_encoder
 from pydantic.networks import EmailStr
 from sqlalchemy.orm import Session
-from google.cloud import storage
+import boto3
+from botocore.exceptions import ClientError
 import uuid
 from PyPDF2 import PdfReader
 from io import BytesIO
@@ -46,18 +47,34 @@ def upload_file(
         raise HTTPException(status_code=400, detail="JSON file must be of type application/json")
 
     try:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
         folder_name = str(uuid.uuid4())[:16]
-        pdf_blob = bucket.blob(f"{folder_name}/{pdf_file.filename}")
-        pdf_blob.upload_from_file(pdf_file.file)
+        
+        # Upload PDF file
+        pdf_file.file.seek(0)
+        s3_client.put_object(
+            Bucket=settings.AWS_S3_BUCKET,
+            Key=f"{folder_name}/{pdf_file.filename}",
+            Body=pdf_file.file,
+            ContentType=pdf_file.content_type
+        )
 
         # Upload JSON file if provided
         if json_file:
-            json_blob = bucket.blob(f"{folder_name}/{json_file.filename}")
-            json_blob.upload_from_file(json_file.file)
+            json_file.file.seek(0)
+            s3_client.put_object(
+                Bucket=settings.AWS_S3_BUCKET,
+                Key=f"{folder_name}/{json_file.filename}",
+                Body=json_file.file,
+                ContentType=json_file.content_type
+            )
 
-    except Exception as e:
+    except ClientError as e:
         raise HTTPException(
             status_code=500,
             detail="An error occurred while uploading. Please try again.",
@@ -125,15 +142,30 @@ def read_library_by_uuid(
         )
     json_data = None
     try:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
         folder_name = library.material_file
-        blobs = bucket.list_blobs(prefix=f"{folder_name}/")
-        for blob in blobs:
-            if blob.name.endswith(".json"):
-                json_blob = blob.download_as_bytes()
-                json_data = json.loads(json_blob.decode("utf-8"))
-    except Exception as e:
+        
+        # List objects in the folder
+        response = s3_client.list_objects_v2(
+            Bucket=settings.AWS_S3_BUCKET,
+            Prefix=f"{folder_name}/"
+        )
+        
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                if obj['Key'].endswith(".json"):
+                    json_obj = s3_client.get_object(
+                        Bucket=settings.AWS_S3_BUCKET,
+                        Key=obj['Key']
+                    )
+                    json_data = json.loads(json_obj['Body'].read().decode("utf-8"))
+                    break
+    except ClientError as e:
         raise HTTPException(
             status_code=500, detail="An error occurred while fetching files."
         )
@@ -159,25 +191,40 @@ def get_library_file_url(
         )
 
     try:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
         folder_name = library.material_file
-        blobs = bucket.list_blobs(prefix=f"{folder_name}/")
-        pdf_blob = next((blob for blob in blobs if blob.name.endswith(".pdf")), None)
+        
+        # List objects in the folder
+        response = s3_client.list_objects_v2(
+            Bucket=settings.AWS_S3_BUCKET,
+            Prefix=f"{folder_name}/"
+        )
+        
+        pdf_key = None
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                if obj['Key'].endswith(".pdf"):
+                    pdf_key = obj['Key']
+                    break
 
-        if not pdf_blob:
+        if not pdf_key:
             raise HTTPException(status_code=404, detail="PDF file not found")
 
-        # Generate a signed URL that expires in 1 hour
-        url = pdf_blob.generate_signed_url(
-            version="v4",
-            expiration=datetime.utcnow() + timedelta(minutes=10),
-            method="GET",
+        # Generate a signed URL that expires in 10 minutes
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.AWS_S3_BUCKET, 'Key': pdf_key},
+            ExpiresIn=600  # 10 minutes in seconds
         )
 
         return {"file_url": url}
 
-    except Exception as e:
+    except ClientError as e:
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while generating file URL: {str(e)}",
@@ -200,20 +247,35 @@ def get_library_file_url_for_course_and_section_contents(
     #     )
 
     try:
-        storage_client = storage.Client()
-        bucket = storage_client.get_bucket(settings.GOOGLE_STORAGE_BUCKET)
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
         folder_name = library.material_file
-        blobs = bucket.list_blobs(prefix=f"{folder_name}/")
-        pdf_blob = next((blob for blob in blobs if blob.name.endswith(".pdf")), None)
+        
+        # List objects in the folder
+        response = s3_client.list_objects_v2(
+            Bucket=settings.AWS_S3_BUCKET,
+            Prefix=f"{folder_name}/"
+        )
+        
+        pdf_key = None
+        if 'Contents' in response:
+            for obj in response['Contents']:
+                if obj['Key'].endswith(".pdf"):
+                    pdf_key = obj['Key']
+                    break
 
-        if not pdf_blob:
+        if not pdf_key:
             raise HTTPException(status_code=404, detail="PDF file not found")
 
-        # Generate a signed URL that expires in 1 hour
-        url = pdf_blob.generate_signed_url(
-            version="v4",
-            expiration=datetime.utcnow() + timedelta(minutes=10),
-            method="GET",
+        # Generate a signed URL that expires in 10 minutes
+        url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': settings.AWS_S3_BUCKET, 'Key': pdf_key},
+            ExpiresIn=600  # 10 minutes in seconds
         )
 
         return {"file_url": url,
@@ -225,7 +287,7 @@ def get_library_file_url_for_course_and_section_contents(
                 "author": library.author,
                 }
 
-    except Exception as e:
+    except ClientError as e:
         raise HTTPException(
             status_code=500,
             detail=f"An error occurred while generating file URL: {str(e)}",
