@@ -63,5 +63,15 @@ class CRUDLibrary(CRUDBase[GlobalLibrary, LibraryCreate, LibraryUpdate]):
             .all()
         )
 
+    def delete_library(self, db: Session, *, library_id: uuid.UUID) -> GlobalLibrary:
+        """Delete a library item from the database"""
+        library = self.get_by_uuid(db, library_id=library_id)
+        if not library:
+            raise ValueError("Library not found")
+        
+        db.delete(library)
+        db.commit()
+        return library
+
 
 library = CRUDLibrary(GlobalLibrary)

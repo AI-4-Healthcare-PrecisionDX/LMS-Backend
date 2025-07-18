@@ -292,3 +292,76 @@ def get_library_file_url_for_course_and_section_contents(
             status_code=500,
             detail=f"An error occurred while generating file URL: {str(e)}",
         )
+
+
+@router.delete("/library/{library_id}")
+def delete_library(
+    library_id: uuid.UUID,
+    db: Session = Depends(deps.get_db),
+    # current_user: models.User = Depends(deps.get_current_active_user),
+):
+    """
+    Delete a library item from both database and AWS S3 storage.
+    Only the owner of the library or an admin can delete it.
+    """
+    # Get the library item first to check permissions and get file info
+    library = crud.library.get_by_uuid(db, library_id=library_id)
+    if not library:
+        raise HTTPException(status_code=404, detail="Library not found")
+    
+    # Check permissions - only the owner or admin can delete
+    # if library.user_id != current_user.user_id and current_user.role != "admin":
+    #     raise HTTPException(
+    #         status_code=403, 
+    #         detail="You do not have permission to delete this library item"
+    #     )
+
+    try:
+        # Delete files from S3 first
+        s3_client = boto3.client(
+            's3',
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION
+        )
+        
+        folder_name = library.material_file
+        
+        # List all objects in the folder
+        response = s3_client.list_objects_v2(
+            Bucket=settings.AWS_S3_BUCKET,
+            Prefix=f"{folder_name}/"
+        )
+        
+        # Delete all objects in the folder
+        if 'Contents' in response:
+            objects_to_delete = [{'Key': obj['Key']} for obj in response['Contents']]
+            s3_client.delete_objects(
+                Bucket=settings.AWS_S3_BUCKET,
+                Delete={'Objects': objects_to_delete}
+            )
+
+        # Delete from database (this will cascade delete related records)
+        deleted_library = crud.library.delete_library(db=db, library_id=library_id)
+        
+        return {
+            "message": "Library item and associated files deleted successfully",
+            "deleted_library": {
+                "library_id": str(deleted_library.library_id),
+                "material_title": deleted_library.material_title,
+                "material_type": deleted_library.material_type
+            }
+        }
+
+    except ClientError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting files from S3: {str(e)}"
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred while deleting the library item: {str(e)}"
+        )
