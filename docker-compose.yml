@@ -3,8 +3,6 @@ services:
     build:
       context: .
     image: lms-backend:latest
-    depends_on:
-      - db
     volumes:
       - ./:/code:ro
     environment:
